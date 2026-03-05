@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageId>GoGit.Interop</PackageId>
+    <Version>0.1.0</Version>
+    <Description>C# wrapper for go-git</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../runtimes/osx-arm64/native/libgogit.dylib" Pack="true" PackagePath="runtimes/osx-arm64/native/" Link="libgogit.dylib" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../runtimes/osx-arm64/native/libgogit.dylib')" />
+    <None Include="../../runtimes/osx-x64/native/libgogit.dylib" Pack="true" PackagePath="runtimes/osx-x64/native/" Link="libgogit_x64.dylib" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../runtimes/osx-x64/native/libgogit.dylib')" />
+    <None Include="../../runtimes/linux-x64/native/libgogit.so" Pack="true" PackagePath="runtimes/linux-x64/native/" Link="libgogit.so" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../runtimes/linux-x64/native/libgogit.so')" />
+    <None Include="../../runtimes/win-x64/native/libgogit.dll" Pack="true" PackagePath="runtimes/win-x64/native/" Link="libgogit.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('../../runtimes/win-x64/native/libgogit.dll')" />
+  </ItemGroup>
+</Project>

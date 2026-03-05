@@ -1,0 +1,14 @@
+# Built native libraries
+runtimes/
+
+# CGO-generated header
+shared/libgogit.h
+
+# .NET build outputs
+**/bin/
+**/obj/
+.vs/
+.idea/
+
+# NuGet packages
+*.nupkg
