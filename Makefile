@@ -3,7 +3,7 @@ SRC = ./shared
 
 UNAME_S := $(shell uname -s)
 UNAME_M := $(shell uname -m)
-DEV_VERSION := 0.1.0-dev.$(shell date +%Y%m%d%H%M%S)
+DEV_VERSION := 0.1.1-dev.$(shell date +%Y%m%d%H%M%S)
 
 ifeq ($(UNAME_S),Darwin)
   ifeq ($(UNAME_M),arm64)

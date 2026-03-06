@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PackageId>GoGit.Interop</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.1</Version>
     <Description>C# wrapper for go-git</Description>
   </PropertyGroup>
   <ItemGroup>

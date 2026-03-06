@@ -6,17 +6,17 @@ package main
 */
 import "C"
 import (
-	"github.com/go-git/go-billy/v6/memfs"
 	"encoding/json"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/go-git/go-billy/v6/memfs"
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
 	"github.com/go-git/go-git/v6/plumbing/storer"
 	"context"
-	"github.com/go-git/go-git/v6/plumbing/transport"
-	billy "github.com/go-git/go-billy/v6"
-	"github.com/go-git/go-git/v6/plumbing/object"
-	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/storage/memory"
+	billy "github.com/go-git/go-billy/v6"
 )
 
 //export GitPlainClone
@@ -652,13 +652,13 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
+	_ object.Signature
+	_ config.RemoteConfig
+	_ transport.AuthMethod
 	_ = memfs.New
 	_ plumbing.Hash
 	_ storer.ReferenceIter
 	_ = context.Background
-	_ transport.AuthMethod
-	_ billy.Filesystem
-	_ object.Signature
-	_ config.RemoteConfig
 	_ = memory.NewStorage
+	_ billy.Filesystem
 )
