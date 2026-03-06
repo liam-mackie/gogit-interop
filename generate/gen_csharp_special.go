@@ -638,6 +638,41 @@ public sealed class DiffChange
 		return err
 	}
 
+	treeEntryMode := csGenHeader + `
+namespace GoGit.Interop;
+
+/// <summary>
+/// The git file mode (type and permission bits) for a tree entry.
+/// Values correspond to the standard git object mode octal constants.
+/// </summary>
+public enum TreeEntryMode : uint
+{
+    /// <summary>No object / non-existent entry.</summary>
+    Nonexistent = 0,
+
+    /// <summary>A directory (tree object). Octal <c>040000</c>.</summary>
+    Directory = 0x4000,
+
+    /// <summary>A regular non-executable file. Octal <c>100644</c>.</summary>
+    NonExecutableFile = 0x81A4,
+
+    /// <summary>A regular non-executable group-writable file. Octal <c>100664</c>.</summary>
+    NonExecutableGroupWritableFile = 0x81B4,
+
+    /// <summary>A regular executable file. Octal <c>100755</c>.</summary>
+    ExecutableFile = 0x81ED,
+
+    /// <summary>A symbolic link. Octal <c>120000</c>.</summary>
+    SymbolicLink = 0xA000,
+
+    /// <summary>A git link (submodule). Octal <c>160000</c>.</summary>
+    GitLink = 0xE000,
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "TreeEntryMode.cs"), []byte(treeEntryMode), 0644); err != nil {
+		return err
+	}
+
 	treeEntryInfo := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
@@ -646,14 +681,17 @@ namespace GoGit.Interop;
 /// <summary>Metadata for a single tree entry (file or subtree), as returned by <see cref="Tree.FindEntry"/>.</summary>
 public sealed class TreeEntryInfo
 {
+    /// <summary>The file or directory name of this entry.</summary>
     [JsonPropertyName("name")]
     public string Name { get; init; } = "";
 
+    /// <summary>The SHA-1 hash of the object this entry points to.</summary>
     [JsonPropertyName("hash")]
     public string Hash { get; init; } = "";
 
+    /// <summary>The git file mode, indicating the object type and permission bits.</summary>
     [JsonPropertyName("mode")]
-    public uint Mode { get; init; }
+    public TreeEntryMode Mode { get; init; }
 }
 `
 	if err := os.WriteFile(filepath.Join(modelsDir, "TreeEntryInfo.cs"), []byte(treeEntryInfo), 0644); err != nil {

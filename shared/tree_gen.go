@@ -6,9 +6,9 @@ package main
 */
 import "C"
 import (
+	"github.com/go-git/go-git/v6/plumbing"
 	"encoding/json"
 	"github.com/go-git/go-git/v6/plumbing/object"
-	"github.com/go-git/go-git/v6/plumbing"
 )
 
 //export GitTreeDiff
@@ -207,6 +207,6 @@ func GitTreeFree(tHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ object.Signature
 	_ plumbing.Hash
+	_ object.Signature
 )

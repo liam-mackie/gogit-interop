@@ -7,12 +7,15 @@ namespace GoGit.Interop;
 /// <summary>Metadata for a single tree entry (file or subtree), as returned by <see cref="Tree.FindEntry"/>.</summary>
 public sealed class TreeEntryInfo
 {
+    /// <summary>The file or directory name of this entry.</summary>
     [JsonPropertyName("name")]
     public string Name { get; init; } = "";
 
+    /// <summary>The SHA-1 hash of the object this entry points to.</summary>
     [JsonPropertyName("hash")]
     public string Hash { get; init; } = "";
 
+    /// <summary>The git file mode, indicating the object type and permission bits.</summary>
     [JsonPropertyName("mode")]
-    public uint Mode { get; init; }
+    public TreeEntryMode Mode { get; init; }
 }

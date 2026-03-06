@@ -6,17 +6,17 @@ package main
 */
 import "C"
 import (
-	"github.com/go-git/go-git/v6/plumbing/object"
-	"context"
-	"github.com/go-git/go-git/v6/config"
-	"github.com/go-git/go-git/v6/plumbing/transport"
-	"github.com/go-git/go-git/v6/storage/memory"
-	"github.com/go-git/go-git/v6/plumbing/storer"
-	"github.com/go-git/go-billy/v6/memfs"
-	billy "github.com/go-git/go-billy/v6"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/plumbing/storer"
+	"context"
+	"github.com/go-git/go-git/v6/storage/memory"
+	"github.com/go-git/go-billy/v6/memfs"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/plumbing/transport"
+	billy "github.com/go-git/go-billy/v6"
 )
 
 //export GitPlainClone
@@ -652,13 +652,13 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
+	_ plumbing.Hash
 	_ object.Signature
+	_ storer.ReferenceIter
 	_ = context.Background
+	_ = memory.NewStorage
+	_ = memfs.New
 	_ config.RemoteConfig
 	_ transport.AuthMethod
-	_ = memory.NewStorage
-	_ storer.ReferenceIter
-	_ = memfs.New
 	_ billy.Filesystem
-	_ plumbing.Hash
 )

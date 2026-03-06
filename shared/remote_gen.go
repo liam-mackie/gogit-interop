@@ -6,11 +6,11 @@ package main
 */
 import "C"
 import (
-	"encoding/json"
 	git "github.com/go-git/go-git/v6"
 	"context"
 	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/storage/memory"
+	"encoding/json"
 )
 
 //export GitRemoteFetch
