@@ -4,14 +4,18 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>The staging and working-tree status of a single file, as returned by <see cref="Worktree.Status"/>.</summary>
 public sealed class FileStatus
 {
+    /// <summary>The status of the file in the index (staging area). A single letter code, e.g. <c>M</c> for modified, <c>A</c> for added.</summary>
     [JsonPropertyName("staging")]
     public string Staging { get; init; } = "";
 
+    /// <summary>The status of the file in the working tree. A single letter code, e.g. <c>M</c> for modified, <c>?</c> for untracked.</summary>
     [JsonPropertyName("worktree")]
     public string Worktree { get; init; } = "";
 
+    /// <summary>Additional status information, if any.</summary>
     [JsonPropertyName("extra")]
     public string? Extra { get; init; }
 }

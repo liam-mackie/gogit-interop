@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Line-by-line blame information for a file, as returned by <see cref="Repository.Blame"/>.</summary>
 public sealed class BlameResult
 {
     [JsonPropertyName("path")]
@@ -16,22 +17,29 @@ public sealed class BlameResult
     public BlameLine[] Lines { get; init; } = [];
 }
 
+/// <summary>Blame information for a single line of a file.</summary>
 public sealed class BlameLine
 {
+    /// <summary>The display name of the author who last modified this line.</summary>
     [JsonPropertyName("author")]
     public string Author { get; init; } = "";
 
+    /// <summary>The email address of the author who last modified this line.</summary>
     [JsonPropertyName("authorEmail")]
     public string AuthorEmail { get; init; } = "";
 
+    /// <summary>The SHA-1 hash of the commit that last modified this line.</summary>
     [JsonPropertyName("hash")]
     public string Hash { get; init; } = "";
 
+    /// <summary>Unix timestamp of the commit that last modified this line.</summary>
     [JsonPropertyName("date")]
     public long Date { get; init; }
 
+    /// <summary>The text content of the line.</summary>
     [JsonPropertyName("text")]
     public string Text { get; init; } = "";
 
+    /// <summary>The commit date as a <see cref="DateTimeOffset"/>.</summary>
     public DateTimeOffset DateTimeOffset => DateTimeOffset.FromUnixTimeSeconds(Date);
 }

@@ -3,6 +3,7 @@
 
 namespace GoGit.Interop;
 
+/// <summary>A git blob object representing raw file contents. Wraps <c>*object.Blob</c> from go-git.</summary>
 public sealed class Blob : IDisposable
 {
     private long _handle;
@@ -18,6 +19,7 @@ public sealed class Blob : IDisposable
         return NativeMethods.ConsumeGoString(hash)!;
     }
 
+    /// <summary>Returns the full contents of this blob as a UTF-8 string.</summary>
     public string Contents()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -32,6 +34,7 @@ public sealed class Blob : IDisposable
         return val;
     }
 
+    /// <summary>The SHA-1 hash of this blob.</summary>
     public string Hash
     {
         get
@@ -42,6 +45,7 @@ public sealed class Blob : IDisposable
         }
     }
 
+    /// <summary>The size of the blob contents in bytes.</summary>
     public long Size
     {
         get

@@ -123,6 +123,11 @@ func collectImports(ht *HandleType, isRepo bool) []string {
 		importSet["billy \"github.com/go-git/go-billy/v6\""] = true
 	}
 
+	if ht.GoName == "Remote" {
+		addPackageImport(importSet, "github.com/go-git/go-git/v6/config")
+		addPackageImport(importSet, "github.com/go-git/go-git/v6/storage/memory")
+	}
+
 	for _, imp := range extraImportsForType(ht.GoName) {
 		importSet[imp] = true
 	}

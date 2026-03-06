@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A git repository. Provides access to commits, branches, tags, remotes, and worktree operations. Wraps <c>*git.Repository</c> from go-git.</summary>
 public sealed class Repository : IDisposable
 {
     private long _handle;
@@ -12,30 +13,35 @@ public sealed class Repository : IDisposable
     internal Repository(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new git repository at <paramref name="path"/>.</summary>
     public static Repository Init(string path, bool isBare = false)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainInit(path, isBare ? 1 : 0, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Opens an existing git repository at <paramref name="path"/>.</summary>
     public static Repository Open(string path)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainOpen(path, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Opens an existing git repository at <paramref name="path"/> with additional options.</summary>
     public static Repository OpenWithOptions(string path, PlainOpenOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainOpenWithOptions(path, options.Handle, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Clones the repository described by <paramref name="options"/> into <paramref name="path"/> on disk.</summary>
     public static Repository Clone(string path, CloneOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainClone(path, options.Handle, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Clones the repository described by <paramref name="options"/> entirely into memory. No files are written to disk.</summary>
     public static Repository CloneInMemory(CloneOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitCloneInMemory(options.Handle, out var handle));
@@ -49,6 +55,7 @@ public sealed class Repository : IDisposable
         return new Blob(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all blob objects in the object store.</summary>
     public BlobIterator BlobObjects()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +63,7 @@ public sealed class Repository : IDisposable
         return new BlobIterator(iter);
     }
 
+    /// <summary>Returns the configuration for the branch named <paramref name="name"/>.</summary>
     public BranchConfig GetBranch(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -64,6 +72,7 @@ public sealed class Repository : IDisposable
         return JsonSerializer.Deserialize<BranchConfig>(json)!;
     }
 
+    /// <summary>Returns an iterator over all branch references.</summary>
     public ReferenceIterator Branches()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -78,6 +87,7 @@ public sealed class Repository : IDisposable
         return new Commit(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all commit objects in the object store.</summary>
     public CommitIterator CommitObjects()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -85,6 +95,7 @@ public sealed class Repository : IDisposable
         return new CommitIterator(iter);
     }
 
+    /// <summary>Returns a subset of the repository's git configuration (core, user identity, default branch).</summary>
     public GitConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -93,12 +104,14 @@ public sealed class Repository : IDisposable
         return JsonSerializer.Deserialize<GitConfig>(json)!;
     }
 
+    /// <summary>Creates a new local branch pointing at <paramref name="hash"/>.</summary>
     public void CreateBranch(string name, string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCreateBranch(_handle, name, hash));
     }
 
+    /// <summary>Adds a new remote with the given <paramref name="name"/> and <paramref name="url"/> to the repository configuration.</summary>
     public Remote CreateRemote(string name, string url)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -106,6 +119,7 @@ public sealed class Repository : IDisposable
         return new Remote(handle);
     }
 
+    /// <summary>Creates a temporary anonymous remote for <paramref name="url"/>. The remote is not saved to the repository configuration.</summary>
     public Remote CreateRemoteAnonymous(string url)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -120,42 +134,49 @@ public sealed class Repository : IDisposable
         return (NativeMethods.ConsumeGoString(outRefName)!, NativeMethods.ConsumeGoString(outHash)!);
     }
 
+    /// <summary>Deletes a local branch by name.</summary>
     public void DeleteBranch(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryDeleteBranch(_handle, name));
     }
 
+    /// <summary>Removes an object from the object store by hash.</summary>
     public void DeleteObject(string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryDeleteObject(_handle, hash));
     }
 
+    /// <summary>Removes a remote configuration by name.</summary>
     public void DeleteRemote(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryDeleteRemote(_handle, name));
     }
 
+    /// <summary>Deletes a tag by name.</summary>
     public void DeleteTag(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryDeleteTag(_handle, name));
     }
 
+    /// <summary>Fetches from all configured remotes.</summary>
     public void Fetch(FetchOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryFetch(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Fetches from all configured remotes using a background context.</summary>
     public void FetchContext(FetchOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryFetchContext(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Returns the HEAD reference as a (refName, hash) pair.</summary>
     public (string RefName, string Hash) Head()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -163,6 +184,7 @@ public sealed class Repository : IDisposable
         return (NativeMethods.ConsumeGoString(outRefName)!, NativeMethods.ConsumeGoString(outHash)!);
     }
 
+    /// <summary>Returns an iterator over commits reachable from the options starting point.</summary>
     public CommitIterator Log(LogOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -170,6 +192,7 @@ public sealed class Repository : IDisposable
         return new CommitIterator(iter);
     }
 
+    /// <summary>Merges the commit identified by <paramref name="hash"/> into the current branch.</summary>
     public void Merge(string refName, string hash, MergeOptions? options = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -177,6 +200,7 @@ public sealed class Repository : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryMerge(_handle, refName, hash, optsHandle));
     }
 
+    /// <summary>Returns an iterator over all note references.</summary>
     public ReferenceIterator Notes()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -184,18 +208,21 @@ public sealed class Repository : IDisposable
         return new ReferenceIterator(iter);
     }
 
+    /// <summary>Pushes local changes to the remote.</summary>
     public void Push(PushOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryPush(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Pushes local changes to the remote using a background context.</summary>
     public void PushContext(PushOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryPushContext(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Looks up a single reference by name.</summary>
     public (string RefName, string Hash) Reference(string name, bool resolved)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -203,6 +230,7 @@ public sealed class Repository : IDisposable
         return (NativeMethods.ConsumeGoString(outRefName)!, NativeMethods.ConsumeGoString(outHash)!);
     }
 
+    /// <summary>Returns an iterator over all references in the repository.</summary>
     public ReferenceIterator References()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -217,6 +245,7 @@ public sealed class Repository : IDisposable
         return new Remote(resultHandle);
     }
 
+    /// <summary>Resolves a revision string (e.g. <c>HEAD~2</c>) to a commit hash.</summary>
     public string ResolveRevision(string input)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -238,6 +267,7 @@ public sealed class Repository : IDisposable
         return new Tag(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all annotated tag objects in the object store.</summary>
     public TagIterator TagObjects()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -245,6 +275,7 @@ public sealed class Repository : IDisposable
         return new TagIterator(iter);
     }
 
+    /// <summary>Returns an iterator over all tag references.</summary>
     public ReferenceIterator Tags()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -259,6 +290,7 @@ public sealed class Repository : IDisposable
         return new Tree(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all tree objects in the object store.</summary>
     public TreeIterator TreeObjects()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -273,6 +305,7 @@ public sealed class Repository : IDisposable
         return new Worktree(resultHandle);
     }
 
+    /// <summary>Returns the names of all configured remotes.</summary>
     public string[] Remotes()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -281,6 +314,7 @@ public sealed class Repository : IDisposable
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
 
+    /// <summary>Returns line-by-line blame information for the file at <paramref name="path"/> as of the given <paramref name="commit"/>.</summary>
     public static BlameResult Blame(Commit commit, string path)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitBlame(commit.Handle, path, out var jsonPtr));

@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>The working tree of a repository. Provides staging, committing, checkout, reset, restore, and status operations. Wraps <c>*git.Worktree</c> from go-git.</summary>
 public sealed class Worktree : IDisposable
 {
     private long _handle;
@@ -12,6 +13,7 @@ public sealed class Worktree : IDisposable
     internal Worktree(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Stages a file at the given path.</summary>
     public string Add(string path)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -31,6 +33,7 @@ public sealed class Worktree : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeAddWithOptions(_handle, opts?.Handle ?? 0));
     }
 
+    /// <summary>Checks out a branch, tag, or commit.</summary>
     public void Checkout(CheckoutOptions? opts = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -43,12 +46,14 @@ public sealed class Worktree : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeCherryPick(_handle, commitOpts.Handle, ortStrategyOption));
     }
 
+    /// <summary>Removes untracked files from the working tree.</summary>
     public void Clean(CleanOptions? opts = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeClean(_handle, opts?.Handle ?? 0));
     }
 
+    /// <summary>Creates a new commit with the staged changes.</summary>
     public string Commit(string msg, CommitOptions? opts = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,12 +68,14 @@ public sealed class Worktree : IDisposable
         return NativeMethods.ConsumeGoString(hash)!;
     }
 
+    /// <summary>Fetches and merges from the tracked remote branch.</summary>
     public void Pull(PullOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreePull(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Fetches and merges from the tracked remote branch using a background context.</summary>
     public void PullContext(PullOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -88,18 +95,21 @@ public sealed class Worktree : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeRemoveGlob(_handle, pattern));
     }
 
+    /// <summary>Resets the working tree and/or index to the given state.</summary>
     public void Reset(ResetOptions? opts = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeReset(_handle, opts?.Handle ?? 0));
     }
 
+    /// <summary>Restores working tree files.</summary>
     public void Restore(RestoreOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitWorktreeRestore(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Returns the status of each file in the working tree, keyed by path.</summary>
     public Dictionary<string, FileStatus> Status()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -115,6 +125,7 @@ public sealed class Worktree : IDisposable
         return new Submodule(resultHandle);
     }
 
+    /// <summary>Returns the names of all submodules registered in this worktree.</summary>
     public string[] Submodules()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

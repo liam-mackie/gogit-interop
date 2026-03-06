@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>A subset of the repository's git configuration, as returned by <see cref="Repository.GetConfig"/>.</summary>
 public sealed class GitConfig
 {
     [JsonPropertyName("core")]
@@ -22,26 +23,34 @@ public sealed class GitConfig
     public GitConfigInit Init { get; init; } = new();
 }
 
+/// <summary>Core repository settings.</summary>
 public sealed class GitConfigCore
 {
+    /// <summary>Whether the repository is bare (has no working tree).</summary>
     [JsonPropertyName("isBare")]
     public bool IsBare { get; init; }
 
+    /// <summary>Path to the working tree, if set explicitly in the config.</summary>
     [JsonPropertyName("worktree")]
     public string Worktree { get; init; } = "";
 }
 
+/// <summary>A git identity (name + email) from the repository configuration.</summary>
 public sealed class GitConfigIdentity
 {
+    /// <summary>The display name.</summary>
     [JsonPropertyName("name")]
     public string Name { get; init; } = "";
 
+    /// <summary>The email address.</summary>
     [JsonPropertyName("email")]
     public string Email { get; init; } = "";
 }
 
+/// <summary>Repository init settings.</summary>
 public sealed class GitConfigInit
 {
+    /// <summary>The default branch name used when initialising a new repository.</summary>
     [JsonPropertyName("defaultBranch")]
     public string DefaultBranch { get; init; } = "";
 }

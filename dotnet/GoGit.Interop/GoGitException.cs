@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Exception thrown when a go-git operation fails. The message is the error string returned by the Go library.</summary>
 public sealed class GoGitException : Exception
 {
     public GoGitException(string message) : base(message) { }

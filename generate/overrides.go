@@ -87,6 +87,7 @@ func generateExtraMethodsGo(b *strings.Builder, ht *HandleType) {
 		generateExtraCloneInMemory(b)
 		generateExtraBlame(b)
 	case "Remote":
+		generateExtraNewRemote(b)
 		generateExtraRemoteConfigName(b)
 		generateExtraRemoteConfig(b)
 	case "Submodule":
@@ -149,6 +150,7 @@ func writeExtraNativeMethods(b *strings.Builder, ht *HandleType) {
 		writeDllImport(b, "GitCloneInMemory", "long optsHandle, out long handleOut")
 		writeDllImport(b, "GitBlame", "long commitHandle,\n        [MarshalAs(UnmanagedType.LPUTF8Str)] string path,\n        out IntPtr jsonOut")
 	case "Remote":
+		writeDllImport(b, "GitNewRemote", "[MarshalAs(UnmanagedType.LPUTF8Str)] string url, out long handleOut")
 		writeDllImport(b, "GitRemoteConfigName", "long remoteHandle, out IntPtr nameOut")
 		writeDllImport(b, "GitRemoteConfig", "long remoteHandle, out IntPtr jsonOut")
 	case "Submodule":
@@ -317,6 +319,20 @@ func GitRepositoryRemotes(repoHandle C.longlong, jsonOut **C.char) *C.char {
 		return toCError(err)
 	}
 	*jsonOut = C.CString(string(data))
+	return nil
+}
+
+`)
+}
+
+func generateExtraNewRemote(b *strings.Builder) {
+	b.WriteString(`//export GitNewRemote
+func GitNewRemote(url *C.char, handleOut *C.longlong) *C.char {
+	remote := git.NewRemote(memory.NewStorage(), &config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{C.GoString(url)},
+	})
+	*handleOut = C.longlong(storeHandle(remote))
 	return nil
 }
 

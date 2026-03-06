@@ -8,9 +8,12 @@ import (
 	"text/template"
 )
 
-var optionsTemplate = template.Must(template.New("options").Parse(csGenHeader + `#nullable enable
+var optionsTemplate = template.Must(template.New("options").Funcs(template.FuncMap{
+	"trimSet": func(s string) string { return strings.TrimPrefix(s, "Set") },
+}).Parse(csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>{{.ClassName}}</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class {{.ClassName}} : IDisposable
 {
     private long _handle;
@@ -18,11 +21,13 @@ public sealed class {{.ClassName}} : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="{{.ClassName}}"/> with default values.</summary>
     public {{.ClassName}}()
     {
         NativeMethods.{{.CPrefix}}New(out _handle);
     }
 {{range .Fields}}
+    /// <summary>Sets the <c>{{.MethodName | trimSet}}</c> option.</summary>
     public {{.ClassName}} {{.MethodName}}({{.CSharpParamType}} value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -30,6 +35,7 @@ public sealed class {{.ClassName}} : IDisposable
         return this;
     }
 {{end}}{{range .ExtraSetters}}
+    /// <summary>Sets the <c>{{.MethodName | trimSet}}</c> option.</summary>
     public {{.ClassName}} {{.MethodName}}({{.Params}})
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -37,6 +43,7 @@ public sealed class {{.ClassName}} : IDisposable
         return this;
     }
 {{end}}
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>PullOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class PullOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class PullOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="PullOptions"/> with default values.</summary>
     public PullOptions()
     {
         NativeMethods.GitPullOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>RemoteName</c> option.</summary>
     public PullOptions SetRemoteName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RemoteURL</c> option.</summary>
     public PullOptions SetRemoteURL(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>ReferenceName</c> option.</summary>
     public PullOptions SetReferenceName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SingleBranch</c> option.</summary>
     public PullOptions SetSingleBranch(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Depth</c> option.</summary>
     public PullOptions SetDepth(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public PullOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RecurseSubmodules</c> option.</summary>
     public PullOptions SetRecurseSubmodules(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Force</c> option.</summary>
     public PullOptions SetForce(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -70,6 +80,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>InsecureSkipTLS</c> option.</summary>
     public PullOptions SetInsecureSkipTLS(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -77,6 +88,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Proxy</c> option.</summary>
     public PullOptions SetProxy(string url, string? username = null, string? password = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -84,6 +96,7 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

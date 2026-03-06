@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A git tree object representing a directory snapshot. Provides file enumeration, entry lookup, and diff operations. Wraps <c>*object.Tree</c> from go-git.</summary>
 public sealed class Tree : IDisposable
 {
     private long _handle;
@@ -12,6 +13,7 @@ public sealed class Tree : IDisposable
     internal Tree(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Returns the list of file changes between this tree and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
     public DiffChange[] Diff(Tree? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -27,6 +29,7 @@ public sealed class Tree : IDisposable
         return new File(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all files reachable from this tree.</summary>
     public FileIterator Files()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -34,6 +37,7 @@ public sealed class Tree : IDisposable
         return new FileIterator(iter);
     }
 
+    /// <summary>Finds the tree entry at the given <paramref name="path"/>, searching recursively through subtrees.</summary>
     public TreeEntryInfo FindEntry(string path)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +53,7 @@ public sealed class Tree : IDisposable
         return NativeMethods.ConsumeGoString(hash)!;
     }
 
+    /// <summary>Returns the unified diff between this tree and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
     public string GetPatch(Tree? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -77,6 +82,7 @@ public sealed class Tree : IDisposable
         return val;
     }
 
+    /// <summary>The SHA-1 hash of this tree.</summary>
     public string Hash
     {
         get

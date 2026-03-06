@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>ListOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class ListOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class ListOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="ListOptions"/> with default values.</summary>
     public ListOptions()
     {
         NativeMethods.GitListOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public ListOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>InsecureSkipTLS</c> option.</summary>
     public ListOptions SetInsecureSkipTLS(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>PeelingOption</c> option.</summary>
     public ListOptions SetPeelingOption(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Timeout</c> option.</summary>
     public ListOptions SetTimeout(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Proxy</c> option.</summary>
     public ListOptions SetProxy(string url, string? username = null, string? password = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

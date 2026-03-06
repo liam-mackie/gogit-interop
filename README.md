@@ -286,6 +286,7 @@ Some useful operations don't correspond to a single Go method, or they access ne
 
 - `Repository.Remotes()` — calls `repo.Remotes()`, returns JSON array of names
 - `Repository.Blame(commit, path)` — calls `git.Blame()`, returns JSON
+- `Remote.Create(url)` — static factory; creates a standalone remote via `git.NewRemote` with in-memory storage, no local clone required
 - `Remote.Config()` — calls `remote.Config()`, returns full JSON
 - `Submodule.Config()` / `Submodule.Status()` — accesses nested config/status
 - `Commit.AuthorName`, `AuthorEmail`, `AuthorWhen`, etc. — accesses `Signature` struct fields
@@ -500,6 +501,14 @@ Console.WriteLine($"Tracks: {branch.Remote}/{branch.Merge}");
 // Repository config
 var config = repo.GetConfig();
 Console.WriteLine($"User: {config.User.Name} <{config.User.Email}>");
+
+// List remote refs without a local clone
+using var opts = new ListOptions()
+    .SetAuth(Auth.TokenHTTP(Environment.GetEnvironmentVariable("GH_TOKEN")!));
+using var remote = Remote.Create("https://github.com/user/repo.git");
+var refs = remote.List(opts);
+foreach (var r in refs)
+    Console.WriteLine($"{r.Hash}  {r.Name}");
 ```
 
 ## Current API coverage
@@ -510,7 +519,7 @@ Console.WriteLine($"User: {config.User.Name} <{config.User.Email}>");
 |------|---------|--------|-------|
 | Repository | ~20 | — | Factory methods, object lookups, branch/tag/remote ops |
 | Worktree | ~10 | — | Add, commit, checkout, status, reset, restore |
-| Remote | ~3 | — | Fetch, push, list refs |
+| Remote | ~4 | — | Fetch, push, list refs; `Remote.Create(url)` for standalone use without a local clone |
 | Submodule | ~3 | — | Init, update, config, status |
 | Commit | ~10 | Hash, Message, etc. | Tree, parents, stats, patch, merge-base, verify |
 | Tree | ~6 | Hash | File lookup, entries, diff, patch, find-entry |

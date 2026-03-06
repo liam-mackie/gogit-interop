@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a local branch, as returned by <see cref="Repository.GetBranch"/>.</summary>
 public sealed class BranchConfig
 {
     [JsonPropertyName("name")]

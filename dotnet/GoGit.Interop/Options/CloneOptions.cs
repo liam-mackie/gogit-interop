@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>CloneOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class CloneOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class CloneOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="CloneOptions"/> with default values.</summary>
     public CloneOptions()
     {
         NativeMethods.GitCloneOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>URL</c> option.</summary>
     public CloneOptions SetURL(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public CloneOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RemoteName</c> option.</summary>
     public CloneOptions SetRemoteName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>ReferenceName</c> option.</summary>
     public CloneOptions SetReferenceName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SingleBranch</c> option.</summary>
     public CloneOptions SetSingleBranch(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Mirror</c> option.</summary>
     public CloneOptions SetMirror(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>NoCheckout</c> option.</summary>
     public CloneOptions SetNoCheckout(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Depth</c> option.</summary>
     public CloneOptions SetDepth(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -70,6 +80,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RecurseSubmodules</c> option.</summary>
     public CloneOptions SetRecurseSubmodules(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -77,6 +88,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>ShallowSubmodules</c> option.</summary>
     public CloneOptions SetShallowSubmodules(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -84,6 +96,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Tags</c> option.</summary>
     public CloneOptions SetTags(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -91,6 +104,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>InsecureSkipTLS</c> option.</summary>
     public CloneOptions SetInsecureSkipTLS(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -98,6 +112,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Shared</c> option.</summary>
     public CloneOptions SetShared(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -105,6 +120,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Bare</c> option.</summary>
     public CloneOptions SetBare(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -112,6 +128,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Proxy</c> option.</summary>
     public CloneOptions SetProxy(string url, string? username = null, string? password = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -119,6 +136,7 @@ public sealed class CloneOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>GrepOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class GrepOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class GrepOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="GrepOptions"/> with default values.</summary>
     public GrepOptions()
     {
         NativeMethods.GitGrepOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>InvertMatch</c> option.</summary>
     public GrepOptions SetInvertMatch(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class GrepOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>CommitHash</c> option.</summary>
     public GrepOptions SetCommitHash(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class GrepOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>ReferenceName</c> option.</summary>
     public GrepOptions SetReferenceName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class GrepOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

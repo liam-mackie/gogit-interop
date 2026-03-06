@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>RestoreOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class RestoreOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class RestoreOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="RestoreOptions"/> with default values.</summary>
     public RestoreOptions()
     {
         NativeMethods.GitRestoreOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Staged</c> option.</summary>
     public RestoreOptions SetStaged(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class RestoreOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Worktree</c> option.</summary>
     public RestoreOptions SetWorktree(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class RestoreOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Files</c> option.</summary>
     public RestoreOptions SetFiles(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class RestoreOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>AddFile</c> option.</summary>
     public RestoreOptions AddFile(string path)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class RestoreOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

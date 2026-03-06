@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>SubmoduleUpdateOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class SubmoduleUpdateOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class SubmoduleUpdateOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="SubmoduleUpdateOptions"/> with default values.</summary>
     public SubmoduleUpdateOptions()
     {
         NativeMethods.GitSubmoduleUpdateOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Init</c> option.</summary>
     public SubmoduleUpdateOptions SetInit(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class SubmoduleUpdateOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>NoFetch</c> option.</summary>
     public SubmoduleUpdateOptions SetNoFetch(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class SubmoduleUpdateOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RecurseSubmodules</c> option.</summary>
     public SubmoduleUpdateOptions SetRecurseSubmodules(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class SubmoduleUpdateOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public SubmoduleUpdateOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class SubmoduleUpdateOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Depth</c> option.</summary>
     public SubmoduleUpdateOptions SetDepth(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class SubmoduleUpdateOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

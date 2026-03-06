@@ -4,6 +4,11 @@ using System.Runtime.InteropServices;
 
 namespace GoGit.Interop;
 
+/// <summary>
+/// Authentication credentials for remote git operations.
+/// Use the static factory methods (<see cref="BasicHTTP"/>, <see cref="TokenHTTP"/>, <see cref="SSHKey"/>, etc.)
+/// to create an instance, then pass it to options such as <see cref="CloneOptions"/> or <see cref="FetchOptions"/> via <c>SetAuth</c>.
+/// </summary>
 public sealed class Auth : IDisposable
 {
     private long _handle;
@@ -12,42 +17,49 @@ public sealed class Auth : IDisposable
     internal Auth(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Creates HTTP Basic authentication credentials.</summary>
     public static Auth BasicHTTP(string username, string password)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewBasicHTTP(username, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates HTTP Bearer token authentication credentials.</summary>
     public static Auth TokenHTTP(string token)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewTokenHTTP(token, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH public-key authentication by loading the private key from a PEM file on disk.</summary>
     public static Auth SSHKeyFromFile(string user, string pemFile, string password = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHKeyFromFile(user, pemFile, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH public-key authentication from a PEM-encoded private key string.</summary>
     public static Auth SSHKey(string user, string pem, string password = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHKey(user, pem, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH authentication that delegates to the running SSH agent.</summary>
     public static Auth SSHAgent(string user)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHAgent(user, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH password authentication.</summary>
     public static Auth SSHPassword(string user, string password)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHPassword(user, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Disables SSH host key verification. Use only in trusted environments.</summary>
     public Auth SetInsecureIgnoreHostKey()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -55,6 +67,7 @@ public sealed class Auth : IDisposable
         return this;
     }
 
+    /// <summary>Configures SSH host key verification using the specified known-hosts files.</summary>
     public Auth SetKnownHostsFiles(params string[] paths)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,10 +76,12 @@ public sealed class Auth : IDisposable
         return this;
     }
 
+    /// <summary>A callback invoked to verify an SSH host key. Return a non-null string to reject the connection with that error message.</summary>
     public delegate string? GitHostKeyCallback(string hostname, string remoteAddr, string keyType, string keyBase64);
 
     private GCHandle? _hostKeyCallbackHandle;
 
+    /// <summary>Configures a custom SSH host key verification callback.</summary>
     public Auth SetHostKeyCallback(GitHostKeyCallback callback)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

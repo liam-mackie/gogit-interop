@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="File"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class FileIterator : IEnumerable<File>, IDisposable
 {
     private long _handle;

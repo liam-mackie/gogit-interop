@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>ProxyOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class ProxyOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class ProxyOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="ProxyOptions"/> with default values.</summary>
     public ProxyOptions()
     {
         NativeMethods.GitProxyOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>URL</c> option.</summary>
     public ProxyOptions SetURL(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class ProxyOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Username</c> option.</summary>
     public ProxyOptions SetUsername(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class ProxyOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Password</c> option.</summary>
     public ProxyOptions SetPassword(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class ProxyOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

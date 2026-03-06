@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A git remote. Use <see cref="Create"/> to connect to a remote URL without a local clone, or obtain one from a <see cref="Repository"/>. Wraps <c>*git.Remote</c> from go-git.</summary>
 public sealed class Remote : IDisposable
 {
     private long _handle;
@@ -12,18 +13,21 @@ public sealed class Remote : IDisposable
     internal Remote(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Fetches from this remote.</summary>
     public void Fetch(FetchOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRemoteFetch(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Fetches from this remote using a background context.</summary>
     public void FetchContext(FetchOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRemoteFetchContext(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Lists all references advertised by the remote server. Does not require a local clone.</summary>
     public ReferenceInfo[] List(ListOptions options)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -32,18 +36,21 @@ public sealed class Remote : IDisposable
         return JsonSerializer.Deserialize<ReferenceInfo[]>(json) ?? [];
     }
 
+    /// <summary>Pushes to this remote.</summary>
     public void Push(PushOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRemotePush(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Pushes to this remote using a background context.</summary>
     public void PushContext(PushOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRemotePushContext(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>Returns a human-readable description of the remote.</summary>
     public string String()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -51,6 +58,17 @@ public sealed class Remote : IDisposable
         return NativeMethods.ConsumeGoString(s)!;
     }
 
+    /// <summary>
+    /// Creates a standalone remote for <paramref name="url"/> using in-memory storage.
+    /// No local clone is required. Use <see cref="List"/> to enumerate remote references.
+    /// </summary>
+    public static Remote Create(string url)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitNewRemote(url, out var handle));
+        return new Remote(handle);
+    }
+
+    /// <summary>The name of this remote as recorded in the repository configuration.</summary>
     public string Name
     {
         get
@@ -61,6 +79,7 @@ public sealed class Remote : IDisposable
         }
     }
 
+    /// <summary>Returns the full configuration for this remote including URLs and fetch refspecs.</summary>
     public RemoteConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

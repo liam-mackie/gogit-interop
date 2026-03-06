@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>FetchOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class FetchOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class FetchOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="FetchOptions"/> with default values.</summary>
     public FetchOptions()
     {
         NativeMethods.GitFetchOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>RemoteName</c> option.</summary>
     public FetchOptions SetRemoteName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RemoteURL</c> option.</summary>
     public FetchOptions SetRemoteURL(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RefSpecs</c> option.</summary>
     public FetchOptions SetRefSpecs(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Depth</c> option.</summary>
     public FetchOptions SetDepth(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public FetchOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Tags</c> option.</summary>
     public FetchOptions SetTags(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Force</c> option.</summary>
     public FetchOptions SetForce(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>InsecureSkipTLS</c> option.</summary>
     public FetchOptions SetInsecureSkipTLS(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -70,6 +80,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Prune</c> option.</summary>
     public FetchOptions SetPrune(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -77,6 +88,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Proxy</c> option.</summary>
     public FetchOptions SetProxy(string url, string? username = null, string? password = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -84,6 +96,7 @@ public sealed class FetchOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

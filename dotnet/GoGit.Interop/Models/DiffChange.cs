@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>A single file change within a tree diff, as returned by <see cref="Tree.Diff"/>.</summary>
 public sealed class DiffChange
 {
     [JsonPropertyName("action")]

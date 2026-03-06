@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>ResetOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class ResetOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class ResetOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="ResetOptions"/> with default values.</summary>
     public ResetOptions()
     {
         NativeMethods.GitResetOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Commit</c> option.</summary>
     public ResetOptions SetCommit(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class ResetOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Mode</c> option.</summary>
     public ResetOptions SetMode(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class ResetOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Files</c> option.</summary>
     public ResetOptions SetFiles(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class ResetOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SparseDirs</c> option.</summary>
     public ResetOptions SetSparseDirs(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class ResetOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SkipSparseDirValidation</c> option.</summary>
     public ResetOptions SetSkipSparseDirValidation(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class ResetOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

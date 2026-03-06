@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>LogOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class LogOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class LogOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="LogOptions"/> with default values.</summary>
     public LogOptions()
     {
         NativeMethods.GitLogOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>From</c> option.</summary>
     public LogOptions SetFrom(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>To</c> option.</summary>
     public LogOptions SetTo(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Order</c> option.</summary>
     public LogOptions SetOrder(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>FileName</c> option.</summary>
     public LogOptions SetFileName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>All</c> option.</summary>
     public LogOptions SetAll(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Since</c> option.</summary>
     public LogOptions SetSince(DateTimeOffset value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Until</c> option.</summary>
     public LogOptions SetUntil(DateTimeOffset value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class LogOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

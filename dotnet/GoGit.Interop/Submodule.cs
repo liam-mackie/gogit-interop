@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A git submodule. Provides init, update, config, and status operations. Wraps <c>*git.Submodule</c> from go-git.</summary>
 public sealed class Submodule : IDisposable
 {
     private long _handle;
@@ -12,12 +13,14 @@ public sealed class Submodule : IDisposable
     internal Submodule(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Initialises the submodule by registering its URL in the local git config.</summary>
     public void Init()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitSubmoduleInit(_handle));
     }
 
+    /// <summary>Returns the Repository for this submodule.</summary>
     public Repository GetRepository()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -25,6 +28,7 @@ public sealed class Submodule : IDisposable
         return new Repository(resultHandle);
     }
 
+    /// <summary>Fetches and checks out the submodule at the commit recorded in the parent repo.</summary>
     public void Update(SubmoduleUpdateOptions? o = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -37,6 +41,7 @@ public sealed class Submodule : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitSubmoduleUpdateContext(_handle, o?.Handle ?? 0));
     }
 
+    /// <summary>The name of this submodule as recorded in <c>.gitmodules</c>.</summary>
     public string Name
     {
         get
@@ -47,6 +52,7 @@ public sealed class Submodule : IDisposable
         }
     }
 
+    /// <summary>Returns the configuration for this submodule (name, path, URL, branch).</summary>
     public SubmoduleConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -55,6 +61,7 @@ public sealed class Submodule : IDisposable
         return JsonSerializer.Deserialize<SubmoduleConfig>(json)!;
     }
 
+    /// <summary>Returns the current sync status of this submodule.</summary>
     public SubmoduleStatusInfo GetStatus()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

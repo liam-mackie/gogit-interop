@@ -6,8 +6,8 @@ package main
 */
 import "C"
 import (
-	"github.com/go-git/go-git/v6/plumbing/object"
 	"encoding/json"
+	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 //export GitFileContents

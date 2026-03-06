@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>LogLimitOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class LogLimitOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class LogLimitOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="LogLimitOptions"/> with default values.</summary>
     public LogLimitOptions()
     {
         NativeMethods.GitLogLimitOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Since</c> option.</summary>
     public LogLimitOptions SetSince(DateTimeOffset value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class LogLimitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Until</c> option.</summary>
     public LogLimitOptions SetUntil(DateTimeOffset value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class LogLimitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>TailHash</c> option.</summary>
     public LogLimitOptions SetTailHash(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class LogLimitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

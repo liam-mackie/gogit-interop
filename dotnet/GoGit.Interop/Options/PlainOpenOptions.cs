@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>PlainOpenOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class PlainOpenOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class PlainOpenOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="PlainOpenOptions"/> with default values.</summary>
     public PlainOpenOptions()
     {
         NativeMethods.GitPlainOpenOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>DetectDotGit</c> option.</summary>
     public PlainOpenOptions SetDetectDotGit(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class PlainOpenOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

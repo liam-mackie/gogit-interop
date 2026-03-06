@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="Blob"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
 {
     private long _handle;

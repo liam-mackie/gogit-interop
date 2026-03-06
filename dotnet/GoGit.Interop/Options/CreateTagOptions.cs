@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>CreateTagOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class CreateTagOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class CreateTagOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="CreateTagOptions"/> with default values.</summary>
     public CreateTagOptions()
     {
         NativeMethods.GitCreateTagOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Message</c> option.</summary>
     public CreateTagOptions SetMessage(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class CreateTagOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Tagger</c> option.</summary>
     public CreateTagOptions SetTagger(string name, string email)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class CreateTagOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SignKey</c> option.</summary>
     public CreateTagOptions SetSignKey(long signingKeyHandle)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class CreateTagOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

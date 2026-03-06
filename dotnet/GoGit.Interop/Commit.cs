@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A git commit object. Provides access to the hash, message, author, committer, tree, parents, and diff operations. Wraps <c>*object.Commit</c> from go-git.</summary>
 public sealed class Commit : IDisposable
 {
     private long _handle;
@@ -19,6 +20,7 @@ public sealed class Commit : IDisposable
         return new File(resultHandle);
     }
 
+    /// <summary>Returns an iterator over all files in the commit's tree.</summary>
     public FileIterator Files()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -47,6 +49,7 @@ public sealed class Commit : IDisposable
         return val != 0;
     }
 
+    /// <summary>Returns the SHA-1 hashes of common ancestor commits shared by this commit and <paramref name="other"/>.</summary>
     public string[] MergeBase(Commit other)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -69,6 +72,7 @@ public sealed class Commit : IDisposable
         return new Commit(resultHandle);
     }
 
+    /// <summary>Returns an iterator over the parent commits.</summary>
     public CommitIterator Parents()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -76,6 +80,7 @@ public sealed class Commit : IDisposable
         return new CommitIterator(iter);
     }
 
+    /// <summary>Returns the unified diff between this commit and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
     public string GetPatch(Commit? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -83,6 +88,7 @@ public sealed class Commit : IDisposable
         return NativeMethods.ConsumeGoString(patchPtr)!;
     }
 
+    /// <summary>Returns per-file line addition/deletion statistics for this commit.</summary>
     public FileStat[] Stats()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -98,6 +104,7 @@ public sealed class Commit : IDisposable
         return NativeMethods.ConsumeGoString(s)!;
     }
 
+    /// <summary>Returns the root tree of this commit.</summary>
     public Tree GetTree()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -112,6 +119,7 @@ public sealed class Commit : IDisposable
         return val;
     }
 
+    /// <summary>Verifies the PGP signature of this commit against <paramref name="armoredKeyRing"/>. Throws if the signature is invalid or missing.</summary>
     public void Verify(string armoredKeyRing)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -178,6 +186,7 @@ public sealed class Commit : IDisposable
         }
     }
 
+    /// <summary>The SHA-1 hash of this commit.</summary>
     public string Hash
     {
         get
@@ -208,6 +217,7 @@ public sealed class Commit : IDisposable
         }
     }
 
+    /// <summary>The full commit message.</summary>
     public string Message
     {
         get

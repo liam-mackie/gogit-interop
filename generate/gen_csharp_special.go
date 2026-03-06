@@ -13,6 +13,11 @@ using System.Runtime.InteropServices;
 
 namespace GoGit.Interop;
 
+/// <summary>
+/// Authentication credentials for remote git operations.
+/// Use the static factory methods (<see cref="BasicHTTP"/>, <see cref="TokenHTTP"/>, <see cref="SSHKey"/>, etc.)
+/// to create an instance, then pass it to options such as <see cref="CloneOptions"/> or <see cref="FetchOptions"/> via <c>SetAuth</c>.
+/// </summary>
 public sealed class Auth : IDisposable
 {
     private long _handle;
@@ -21,42 +26,49 @@ public sealed class Auth : IDisposable
     internal Auth(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Creates HTTP Basic authentication credentials.</summary>
     public static Auth BasicHTTP(string username, string password)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewBasicHTTP(username, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates HTTP Bearer token authentication credentials.</summary>
     public static Auth TokenHTTP(string token)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewTokenHTTP(token, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH public-key authentication by loading the private key from a PEM file on disk.</summary>
     public static Auth SSHKeyFromFile(string user, string pemFile, string password = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHKeyFromFile(user, pemFile, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH public-key authentication from a PEM-encoded private key string.</summary>
     public static Auth SSHKey(string user, string pem, string password = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHKey(user, pem, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH authentication that delegates to the running SSH agent.</summary>
     public static Auth SSHAgent(string user)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHAgent(user, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Creates SSH password authentication.</summary>
     public static Auth SSHPassword(string user, string password)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitAuthNewSSHPassword(user, password, out var handle));
         return new Auth(handle);
     }
 
+    /// <summary>Disables SSH host key verification. Use only in trusted environments.</summary>
     public Auth SetInsecureIgnoreHostKey()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -64,6 +76,7 @@ public sealed class Auth : IDisposable
         return this;
     }
 
+    /// <summary>Configures SSH host key verification using the specified known-hosts files.</summary>
     public Auth SetKnownHostsFiles(params string[] paths)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -72,10 +85,12 @@ public sealed class Auth : IDisposable
         return this;
     }
 
+    /// <summary>A callback invoked to verify an SSH host key. Return a non-null string to reject the connection with that error message.</summary>
     public delegate string? GitHostKeyCallback(string hostname, string remoteAddr, string keyType, string keyBase64);
 
     private GCHandle? _hostKeyCallbackHandle;
 
+    /// <summary>Configures a custom SSH host key verification callback.</summary>
     public Auth SetHostKeyCallback(GitHostKeyCallback callback)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -118,6 +133,11 @@ func generateCSharpSigner(dir string) error {
 	content := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>
+/// A signing key used to GPG-sign git commits and tags.
+/// Use <see cref="FromPGPKey"/> to load an armored PGP private key, then pass the instance
+/// to <see cref="CommitOptions"/> or <see cref="CreateTagOptions"/> via <c>SetSigner</c>.
+/// </summary>
 public sealed class Signer : IDisposable
 {
     private long _handle;
@@ -126,6 +146,7 @@ public sealed class Signer : IDisposable
     internal Signer(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Loads a PGP signing key from an ASCII-armored private key string.</summary>
     public static Signer FromPGPKey(string armoredKey, string passphrase = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitSignerNewPGP(armoredKey, passphrase, out var handle));
@@ -150,6 +171,7 @@ func generateCSharpIterators(dir string) error {
 	commitIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="Commit"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
 {
     private long _handle;
@@ -191,6 +213,7 @@ public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
 	refIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="ReferenceInfo"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
 {
     private long _handle;
@@ -236,6 +259,7 @@ public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
 	fileIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="File"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class FileIterator : IEnumerable<File>, IDisposable
 {
     private long _handle;
@@ -277,6 +301,7 @@ public sealed class FileIterator : IEnumerable<File>, IDisposable
 	treeIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="Tree"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class TreeIterator : IEnumerable<Tree>, IDisposable
 {
     private long _handle;
@@ -318,6 +343,7 @@ public sealed class TreeIterator : IEnumerable<Tree>, IDisposable
 	blobIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="Blob"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
 {
     private long _handle;
@@ -359,6 +385,7 @@ public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
 	tagIter := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="Tag"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class TagIterator : IEnumerable<Tag>, IDisposable
 {
     private long _handle;
@@ -407,11 +434,14 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>A git reference (branch, tag, or other ref) as advertised by a remote or stored in a repository.</summary>
 public sealed class ReferenceInfo
 {
+    /// <summary>The full reference name, e.g. <c>refs/heads/main</c>.</summary>
     [JsonPropertyName("name")]
     public required string Name { get; init; }
 
+    /// <summary>The SHA-1 hash the reference points to.</summary>
     [JsonPropertyName("hash")]
     public required string Hash { get; init; }
 }
@@ -425,14 +455,18 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>The staging and working-tree status of a single file, as returned by <see cref="Worktree.Status"/>.</summary>
 public sealed class FileStatus
 {
+    /// <summary>The status of the file in the index (staging area). A single letter code, e.g. <c>M</c> for modified, <c>A</c> for added.</summary>
     [JsonPropertyName("staging")]
     public string Staging { get; init; } = "";
 
+    /// <summary>The status of the file in the working tree. A single letter code, e.g. <c>M</c> for modified, <c>?</c> for untracked.</summary>
     [JsonPropertyName("worktree")]
     public string Worktree { get; init; } = "";
 
+    /// <summary>Additional status information, if any.</summary>
     [JsonPropertyName("extra")]
     public string? Extra { get; init; }
 }
@@ -444,6 +478,7 @@ public sealed class FileStatus
 	goGitException := csGenHeader + `#nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Exception thrown when a go-git operation fails. The message is the error string returned by the Go library.</summary>
 public sealed class GoGitException : Exception
 {
     public GoGitException(string message) : base(message) { }
@@ -458,6 +493,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a local branch, as returned by <see cref="Repository.GetBranch"/>.</summary>
 public sealed class BranchConfig
 {
     [JsonPropertyName("name")]
@@ -485,6 +521,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a git remote (name, URLs, fetch refspecs), as returned by <see cref="Remote.GetConfig"/>.</summary>
 public sealed class RemoteConfig
 {
     [JsonPropertyName("name")]
@@ -506,6 +543,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a git submodule (name, path, URL, branch), as returned by <see cref="Submodule.GetConfig"/>.</summary>
 public sealed class SubmoduleConfig
 {
     [JsonPropertyName("name")]
@@ -530,6 +568,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Sync status of a submodule, as returned by <see cref="Submodule.GetStatus"/>.</summary>
 public sealed class SubmoduleStatusInfo
 {
     [JsonPropertyName("path")]
@@ -554,6 +593,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Per-file line addition/deletion statistics for a commit, as returned by <see cref="Commit.Stats"/>.</summary>
 public sealed class FileStat
 {
     [JsonPropertyName("name")]
@@ -575,6 +615,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>A single file change within a tree diff, as returned by <see cref="Tree.Diff"/>.</summary>
 public sealed class DiffChange
 {
     [JsonPropertyName("action")]
@@ -602,6 +643,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Metadata for a single tree entry (file or subtree), as returned by <see cref="Tree.FindEntry"/>.</summary>
 public sealed class TreeEntryInfo
 {
     [JsonPropertyName("name")]
@@ -623,6 +665,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Line-by-line blame information for a file, as returned by <see cref="Repository.Blame"/>.</summary>
 public sealed class BlameResult
 {
     [JsonPropertyName("path")]
@@ -635,23 +678,30 @@ public sealed class BlameResult
     public BlameLine[] Lines { get; init; } = [];
 }
 
+/// <summary>Blame information for a single line of a file.</summary>
 public sealed class BlameLine
 {
+    /// <summary>The display name of the author who last modified this line.</summary>
     [JsonPropertyName("author")]
     public string Author { get; init; } = "";
 
+    /// <summary>The email address of the author who last modified this line.</summary>
     [JsonPropertyName("authorEmail")]
     public string AuthorEmail { get; init; } = "";
 
+    /// <summary>The SHA-1 hash of the commit that last modified this line.</summary>
     [JsonPropertyName("hash")]
     public string Hash { get; init; } = "";
 
+    /// <summary>Unix timestamp of the commit that last modified this line.</summary>
     [JsonPropertyName("date")]
     public long Date { get; init; }
 
+    /// <summary>The text content of the line.</summary>
     [JsonPropertyName("text")]
     public string Text { get; init; } = "";
 
+    /// <summary>The commit date as a <see cref="DateTimeOffset"/>.</summary>
     public DateTimeOffset DateTimeOffset => DateTimeOffset.FromUnixTimeSeconds(Date);
 }
 `
@@ -664,6 +714,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>A subset of the repository's git configuration, as returned by <see cref="Repository.GetConfig"/>.</summary>
 public sealed class GitConfig
 {
     [JsonPropertyName("core")]
@@ -682,26 +733,34 @@ public sealed class GitConfig
     public GitConfigInit Init { get; init; } = new();
 }
 
+/// <summary>Core repository settings.</summary>
 public sealed class GitConfigCore
 {
+    /// <summary>Whether the repository is bare (has no working tree).</summary>
     [JsonPropertyName("isBare")]
     public bool IsBare { get; init; }
 
+    /// <summary>Path to the working tree, if set explicitly in the config.</summary>
     [JsonPropertyName("worktree")]
     public string Worktree { get; init; } = "";
 }
 
+/// <summary>A git identity (name + email) from the repository configuration.</summary>
 public sealed class GitConfigIdentity
 {
+    /// <summary>The display name.</summary>
     [JsonPropertyName("name")]
     public string Name { get; init; } = "";
 
+    /// <summary>The email address.</summary>
     [JsonPropertyName("email")]
     public string Email { get; init; } = "";
 }
 
+/// <summary>Repository init settings.</summary>
 public sealed class GitConfigInit
 {
+    /// <summary>The default branch name used when initialising a new repository.</summary>
     [JsonPropertyName("defaultBranch")]
     public string DefaultBranch { get; init; } = "";
 }

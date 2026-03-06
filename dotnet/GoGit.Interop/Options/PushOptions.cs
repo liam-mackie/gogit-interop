@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>PushOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class PushOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class PushOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="PushOptions"/> with default values.</summary>
     public PushOptions()
     {
         NativeMethods.GitPushOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>RemoteName</c> option.</summary>
     public PushOptions SetRemoteName(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RemoteURL</c> option.</summary>
     public PushOptions SetRemoteURL(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RefSpecs</c> option.</summary>
     public PushOptions SetRefSpecs(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Auth</c> option.</summary>
     public PushOptions SetAuth(Auth value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Prune</c> option.</summary>
     public PushOptions SetPrune(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Force</c> option.</summary>
     public PushOptions SetForce(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>InsecureSkipTLS</c> option.</summary>
     public PushOptions SetInsecureSkipTLS(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RequireRemoteRefs</c> option.</summary>
     public PushOptions SetRequireRemoteRefs(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -70,6 +80,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>FollowTags</c> option.</summary>
     public PushOptions SetFollowTags(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -77,6 +88,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Options</c> option.</summary>
     public PushOptions SetOptions(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -84,6 +96,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Atomic</c> option.</summary>
     public PushOptions SetAtomic(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -91,6 +104,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Quiet</c> option.</summary>
     public PushOptions SetQuiet(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -98,6 +112,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Proxy</c> option.</summary>
     public PushOptions SetProxy(string url, string? username = null, string? password = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -105,6 +120,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>ForceWithLease</c> option.</summary>
     public PushOptions SetForceWithLease(string refName, string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -112,6 +128,7 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

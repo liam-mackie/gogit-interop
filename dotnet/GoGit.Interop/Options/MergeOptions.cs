@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>MergeOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class MergeOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class MergeOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="MergeOptions"/> with default values.</summary>
     public MergeOptions()
     {
         NativeMethods.GitMergeOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Strategy</c> option.</summary>
     public MergeOptions SetStrategy(int value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class MergeOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

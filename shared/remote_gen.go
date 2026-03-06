@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
 	"context"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/storage/memory"
 )
 
 //export GitRemoteFetch
@@ -88,6 +90,16 @@ func GitRemoteString(rHandle C.longlong, refNameOut **C.char) *C.char {
 	return nil
 }
 
+//export GitNewRemote
+func GitNewRemote(url *C.char, handleOut *C.longlong) *C.char {
+	remote := git.NewRemote(memory.NewStorage(), &config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{C.GoString(url)},
+	})
+	*handleOut = C.longlong(storeHandle(remote))
+	return nil
+}
+
 //export GitRemoteConfigName
 func GitRemoteConfigName(remoteHandle C.longlong, nameOut **C.char) *C.char {
 	remote, ok := loadHandle[*git.Remote](int64(remoteHandle))
@@ -131,4 +143,6 @@ func GitRemoteFree(rHandle C.longlong) {
 var (
 	_ = json.Marshal
 	_ = context.Background
+	_ config.RemoteConfig
+	_ = memory.NewStorage
 )

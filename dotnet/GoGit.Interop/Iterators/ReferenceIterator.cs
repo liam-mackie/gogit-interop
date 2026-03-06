@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Lazily iterates over <see cref="ReferenceInfo"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
 {
     private long _handle;

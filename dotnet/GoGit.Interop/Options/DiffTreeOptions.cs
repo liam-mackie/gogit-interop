@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>DiffTreeOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class DiffTreeOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class DiffTreeOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="DiffTreeOptions"/> with default values.</summary>
     public DiffTreeOptions()
     {
         NativeMethods.GitDiffTreeOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>DetectRenames</c> option.</summary>
     public DiffTreeOptions SetDetectRenames(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class DiffTreeOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RenameScore</c> option.</summary>
     public DiffTreeOptions SetRenameScore(uint value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class DiffTreeOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>RenameLimit</c> option.</summary>
     public DiffTreeOptions SetRenameLimit(uint value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class DiffTreeOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>OnlyExactRenames</c> option.</summary>
     public DiffTreeOptions SetOnlyExactRenames(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class DiffTreeOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

@@ -26,6 +26,9 @@ func generateCSharpWrapper(pkg *Package, ht *HandleType, dir string) error {
 		b.WriteString("using System.Text.Json;\n")
 	}
 	b.WriteString("\nnamespace GoGit.Interop;\n\n")
+	if doc := csTypeDoc(ht.GoName); doc != "" {
+		fmt.Fprintf(&b, "/// <summary>%s</summary>\n", doc)
+	}
 	fmt.Fprintf(&b, "public sealed class %s : IDisposable\n{\n", ht.GoName)
 	b.WriteString("    private long _handle;\n")
 	b.WriteString("    private bool _disposed;\n\n")
@@ -75,30 +78,35 @@ func wrapperNeedsJson(ht *HandleType) bool {
 
 func generateRepoFactoryMethods(b *strings.Builder, pkg *Package) {
 	b.WriteString(`
+    /// <summary>Initialises a new git repository at <paramref name="path"/>.</summary>
     public static Repository Init(string path, bool isBare = false)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainInit(path, isBare ? 1 : 0, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Opens an existing git repository at <paramref name="path"/>.</summary>
     public static Repository Open(string path)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainOpen(path, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Opens an existing git repository at <paramref name="path"/> with additional options.</summary>
     public static Repository OpenWithOptions(string path, PlainOpenOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainOpenWithOptions(path, options.Handle, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Clones the repository described by <paramref name="options"/> into <paramref name="path"/> on disk.</summary>
     public static Repository Clone(string path, CloneOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainClone(path, options.Handle, out var handle));
         return new Repository(handle);
     }
 
+    /// <summary>Clones the repository described by <paramref name="options"/> entirely into memory. No files are written to disk.</summary>
     public static Repository CloneInMemory(CloneOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitCloneInMemory(options.Handle, out var handle));
@@ -112,6 +120,9 @@ func generateGenericWrapperMethod(b *strings.Builder, ht *HandleType, m Method) 
 	publicName := csPublicMethodName(ht, m)
 	params := csWrapperParams(m)
 
+	if doc := csMethodDoc(ht.GoName, m.GoName); doc != "" {
+		fmt.Fprintf(b, "    /// <summary>%s</summary>\n", doc)
+	}
 	fmt.Fprintf(b, "    public %s %s(%s)\n    {\n", returnType, publicName, params)
 	b.WriteString("        ObjectDisposedException.ThrowIf(_disposed, this);\n")
 
@@ -304,6 +315,9 @@ func generateFieldProperties(b *strings.Builder, ht *HandleType) {
 			continue
 		}
 
+		if doc := csFieldDoc(ht.GoName, f.GoName); doc != "" {
+			fmt.Fprintf(b, "\n    /// <summary>%s</summary>", doc)
+		}
 		fmt.Fprintf(b, "\n    public %s %s\n    {\n", csType, f.GoName)
 		b.WriteString("        get\n        {\n")
 		b.WriteString("            ObjectDisposedException.ThrowIf(_disposed, this);\n")
@@ -335,6 +349,128 @@ func csFieldPropertyType(f HandleField) string {
 	default:
 		return ""
 	}
+}
+
+func csTypeDoc(typeName string) string {
+	switch typeName {
+	case "Repository":
+		return "A git repository. Provides access to commits, branches, tags, remotes, and worktree operations. Wraps <c>*git.Repository</c> from go-git."
+	case "Remote":
+		return "A git remote. Use <see cref=\"Create\"/> to connect to a remote URL without a local clone, or obtain one from a <see cref=\"Repository\"/>. Wraps <c>*git.Remote</c> from go-git."
+	case "Worktree":
+		return "The working tree of a repository. Provides staging, committing, checkout, reset, restore, and status operations. Wraps <c>*git.Worktree</c> from go-git."
+	case "Commit":
+		return "A git commit object. Provides access to the hash, message, author, committer, tree, parents, and diff operations. Wraps <c>*object.Commit</c> from go-git."
+	case "Tree":
+		return "A git tree object representing a directory snapshot. Provides file enumeration, entry lookup, and diff operations. Wraps <c>*object.Tree</c> from go-git."
+	case "Blob":
+		return "A git blob object representing raw file contents. Wraps <c>*object.Blob</c> from go-git."
+	case "Tag":
+		return "A git tag object. Provides access to tag name, message, tagger, and the tagged object. Wraps <c>*object.Tag</c> from go-git."
+	case "File":
+		return "A file inside a git tree. Provides access to the file name, hash, and contents. Wraps <c>*object.File</c> from go-git."
+	case "Submodule":
+		return "A git submodule. Provides init, update, config, and status operations. Wraps <c>*git.Submodule</c> from go-git."
+	}
+	return ""
+}
+
+func csMethodDoc(typeName, methodName string) string {
+	key := typeName + "." + methodName
+	docs := map[string]string{
+		// Repository
+		"Repository.Fetch":                   "Fetches from all configured remotes.",
+		"Repository.FetchContext":             "Fetches from all configured remotes using a background context.",
+		"Repository.Push":                     "Pushes local changes to the remote.",
+		"Repository.PushContext":              "Pushes local changes to the remote using a background context.",
+		"Repository.Head":                     "Returns the HEAD reference as a (refName, hash) pair.",
+		"Repository.Log":                      "Returns an iterator over commits reachable from the options starting point.",
+		"Repository.References":               "Returns an iterator over all references in the repository.",
+		"Repository.Reference":                "Looks up a single reference by name.",
+		"Repository.ResolveRevision":          "Resolves a revision string (e.g. <c>HEAD~2</c>) to a commit hash.",
+		"Repository.Branches":                 "Returns an iterator over all branch references.",
+		"Repository.Tags":                     "Returns an iterator over all tag references.",
+		"Repository.Notes":                    "Returns an iterator over all note references.",
+		"Repository.CommitObjects":            "Returns an iterator over all commit objects in the object store.",
+		"Repository.TreeObjects":              "Returns an iterator over all tree objects in the object store.",
+		"Repository.BlobObjects":              "Returns an iterator over all blob objects in the object store.",
+		"Repository.TagObjects":               "Returns an iterator over all annotated tag objects in the object store.",
+		"Repository.DeleteBranch":             "Deletes a local branch by name.",
+		"Repository.DeleteTag":                "Deletes a tag by name.",
+		"Repository.DeleteRemote":             "Removes a remote configuration by name.",
+		"Repository.DeleteObject":             "Removes an object from the object store by hash.",
+		"Repository.Merge":                    "Merges the given commit into the current branch.",
+		// Remote
+		"Remote.Fetch":                        "Fetches from this remote.",
+		"Remote.FetchContext":                 "Fetches from this remote using a background context.",
+		"Remote.Push":                         "Pushes to this remote.",
+		"Remote.PushContext":                  "Pushes to this remote using a background context.",
+		"Remote.String":                       "Returns a human-readable description of the remote.",
+		"Remote.List":                         "Lists references advertised by the remote server. Does not require a local clone.",
+		// Worktree
+		"Worktree.Add":                        "Stages a file at the given path.",
+		"Worktree.Commit":                     "Creates a new commit with the staged changes.",
+		"Worktree.Checkout":                   "Checks out a branch, tag, or commit.",
+		"Worktree.Reset":                      "Resets the working tree and/or index to the given state.",
+		"Worktree.Restore":                    "Restores working tree files.",
+		"Worktree.Clean":                      "Removes untracked files from the working tree.",
+		"Worktree.Pull":                       "Fetches and merges from the tracked remote branch.",
+		"Worktree.PullContext":                "Fetches and merges from the tracked remote branch using a background context.",
+		"Worktree.Grep":                       "Searches working tree files matching the given options.",
+		// Commit
+		"Commit.Tree":                         "Returns the root tree of this commit.",
+		"Commit.Parents":                      "Returns an iterator over the parent commits.",
+		"Commit.Files":                        "Returns an iterator over all files in the commit's tree.",
+		"Commit.Stats":                        "Returns per-file line addition/deletion statistics for this commit.",
+		"Commit.Patch":                        "Returns the unified diff between this commit and the given commit (or the empty tree if nil).",
+		"Commit.MergeBase":                    "Returns the common ancestor commits of this commit and the given commit.",
+		"Commit.Verify":                       "Verifies the PGP signature on this commit against the provided armored key ring.",
+		// Tree
+		"Tree.Files":                          "Returns an iterator over all files reachable from this tree.",
+		"Tree.Entries":                        "Returns the direct entries of this tree.",
+		"Tree.TreeEntries":                    "Returns the direct subtree entries of this tree.",
+		"Tree.Diff":                           "Returns the list of changes between this tree and the given tree (or the empty tree if nil).",
+		"Tree.Patch":                          "Returns the unified diff between this tree and the given tree (or the empty tree if nil).",
+		"Tree.FindEntry":                      "Finds a tree entry by path, searching recursively.",
+		// Tag
+		"Tag.Commit":                          "Returns the commit pointed to by this tag.",
+		"Tag.Tree":                            "Returns the tree pointed to by this tag.",
+		"Tag.Blob":                            "Returns the blob pointed to by this tag.",
+		"Tag.Object":                          "Returns the object pointed to by this tag.",
+		"Tag.Verify":                          "Verifies the PGP signature on this tag against the provided armored key ring.",
+		// Blob
+		"Blob.Reader":                         "Returns the raw byte contents of this blob.",
+		// Submodule
+		"Submodule.Init":                      "Initialises the submodule by registering its URL in the local git config.",
+		"Submodule.Update":                    "Fetches and checks out the submodule at the commit recorded in the parent repo.",
+		"Submodule.Repository":                "Returns the Repository for this submodule.",
+	}
+	if doc, ok := docs[key]; ok {
+		return doc
+	}
+	return ""
+}
+
+func csFieldDoc(typeName, fieldName string) string {
+	key := typeName + "." + fieldName
+	docs := map[string]string{
+		"Commit.Hash":        "The SHA-1 hash of this commit.",
+		"Commit.Message":     "The full commit message.",
+		"Tree.Hash":          "The SHA-1 hash of this tree.",
+		"Blob.Hash":          "The SHA-1 hash of this blob.",
+		"Blob.Size":          "The size of the blob contents in bytes.",
+		"Tag.Hash":           "The SHA-1 hash of this tag object.",
+		"Tag.Name":           "The tag name.",
+		"Tag.Message":        "The tag message.",
+		"Tag.TargetType":     "The object type of the tagged target.",
+		"Tag.Target":         "The SHA-1 hash of the tagged object.",
+		"File.Name":          "The file path relative to the repository root.",
+		"File.Hash":          "The SHA-1 hash of this file's blob.",
+	}
+	if doc, ok := docs[key]; ok {
+		return doc
+	}
+	return ""
 }
 
 var csReservedWords = map[string]string{
@@ -397,7 +533,8 @@ func csWrapperMarshalArg(p Param) string {
 func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method) {
 	switch ht.GoName + "." + m.GoName {
 	case "Repository.CreateRemote":
-		b.WriteString(`    public Remote CreateRemote(string name, string url)
+		b.WriteString(`    /// <summary>Adds a new remote with the given <paramref name="name"/> and <paramref name="url"/> to the repository configuration.</summary>
+    public Remote CreateRemote(string name, string url)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, name, url, out var handle));
@@ -405,14 +542,16 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Repository.CreateBranch":
-		b.WriteString(`    public void CreateBranch(string name, string hash)
+		b.WriteString(`    /// <summary>Creates a new local branch pointing at <paramref name="hash"/>.</summary>
+    public void CreateBranch(string name, string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, name, hash));
     }
 `)
 	case "Repository.CommitObject":
-		b.WriteString(`    public Commit GetCommitObject(string hash)
+		b.WriteString(`    /// <summary>Looks up a commit object by its SHA-1 <paramref name="hash"/>.</summary>
+    public Commit GetCommitObject(string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(
@@ -429,7 +568,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Repository.Merge":
-		b.WriteString(`    public void Merge(string refName, string hash, MergeOptions? options = null)
+		b.WriteString(`    /// <summary>Merges the commit identified by <paramref name="hash"/> into the current branch.</summary>
+    public void Merge(string refName, string hash, MergeOptions? options = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         var optsHandle = options?.Handle ?? 0;
@@ -437,7 +577,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Worktree.Status":
-		b.WriteString(`    public Dictionary<string, FileStatus> Status()
+		b.WriteString(`    /// <summary>Returns the status of each file in the working tree, keyed by path.</summary>
+    public Dictionary<string, FileStatus> Status()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
@@ -446,7 +587,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Worktree.Submodules":
-		b.WriteString(`    public string[] Submodules()
+		b.WriteString(`    /// <summary>Returns the names of all submodules registered in this worktree.</summary>
+    public string[] Submodules()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
@@ -455,7 +597,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Remote.List":
-		b.WriteString(`    public ReferenceInfo[] List(ListOptions options)
+		b.WriteString(`    /// <summary>Lists all references advertised by the remote server. Does not require a local clone.</summary>
+    public ReferenceInfo[] List(ListOptions options)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, options.Handle, out var jsonPtr));
@@ -464,7 +607,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Blob.Reader":
-		b.WriteString(`    public string Contents()
+		b.WriteString(`    /// <summary>Returns the full contents of this blob as a UTF-8 string.</summary>
+    public string Contents()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var dataPtr));
@@ -472,7 +616,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Repository.Branch":
-		b.WriteString(`    public BranchConfig GetBranch(string name)
+		b.WriteString(`    /// <summary>Returns the configuration for the branch named <paramref name="name"/>.</summary>
+    public BranchConfig GetBranch(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, name, out var jsonPtr));
@@ -481,7 +626,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Repository.Config":
-		b.WriteString(`    public GitConfig GetConfig()
+		b.WriteString(`    /// <summary>Returns a subset of the repository's git configuration (core, user identity, default branch).</summary>
+    public GitConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
@@ -490,7 +636,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Repository.CreateRemoteAnonymous":
-		b.WriteString(`    public Remote CreateRemoteAnonymous(string url)
+		b.WriteString(`    /// <summary>Creates a temporary anonymous remote for <paramref name="url"/>. The remote is not saved to the repository configuration.</summary>
+    public Remote CreateRemoteAnonymous(string url)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, url, out var handle));
@@ -498,7 +645,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Commit.Stats":
-		b.WriteString(`    public FileStat[] Stats()
+		b.WriteString(`    /// <summary>Returns per-file line addition/deletion statistics for this commit.</summary>
+    public FileStat[] Stats()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
@@ -507,7 +655,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Commit.Patch":
-		b.WriteString(`    public string GetPatch(Commit? to = null)
+		b.WriteString(`    /// <summary>Returns the unified diff between this commit and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
+    public string GetPatch(Commit? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var patchPtr));
@@ -515,7 +664,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Commit.MergeBase":
-		b.WriteString(`    public string[] MergeBase(Commit other)
+		b.WriteString(`    /// <summary>Returns the SHA-1 hashes of common ancestor commits shared by this commit and <paramref name="other"/>.</summary>
+    public string[] MergeBase(Commit other)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, other.Handle, out var jsonPtr));
@@ -524,14 +674,16 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Commit.Verify":
-		b.WriteString(`    public void Verify(string armoredKeyRing)
+		b.WriteString(`    /// <summary>Verifies the PGP signature of this commit against <paramref name="armoredKeyRing"/>. Throws if the signature is invalid or missing.</summary>
+    public void Verify(string armoredKeyRing)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, armoredKeyRing));
     }
 `)
 	case "Tree.Diff":
-		b.WriteString(`    public DiffChange[] Diff(Tree? to = null)
+		b.WriteString(`    /// <summary>Returns the list of file changes between this tree and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
+    public DiffChange[] Diff(Tree? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var jsonPtr));
@@ -540,7 +692,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Tree.Patch":
-		b.WriteString(`    public string GetPatch(Tree? to = null)
+		b.WriteString(`    /// <summary>Returns the unified diff between this tree and <paramref name="to"/>. Pass <c>null</c> to diff against the empty tree.</summary>
+    public string GetPatch(Tree? to = null)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var patchPtr));
@@ -548,7 +701,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Tree.FindEntry":
-		b.WriteString(`    public TreeEntryInfo FindEntry(string path)
+		b.WriteString(`    /// <summary>Finds the tree entry at the given <paramref name="path"/>, searching recursively through subtrees.</summary>
+    public TreeEntryInfo FindEntry(string path)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, path, out var jsonPtr));
@@ -557,7 +711,8 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
     }
 `)
 	case "Tag.Verify":
-		b.WriteString(`    public void Verify(string armoredKeyRing)
+		b.WriteString(`    /// <summary>Verifies the PGP signature of this tag against <paramref name="armoredKeyRing"/>. Throws if the signature is invalid or missing.</summary>
+    public void Verify(string armoredKeyRing)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, armoredKeyRing));
@@ -570,6 +725,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
 	switch ht.GoName {
 	case "Repository":
 		b.WriteString(`
+    /// <summary>Returns the names of all configured remotes.</summary>
     public string[] Remotes()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -578,6 +734,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
 
+    /// <summary>Returns line-by-line blame information for the file at <paramref name="path"/> as of the given <paramref name="commit"/>.</summary>
     public static BlameResult Blame(Commit commit, string path)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitBlame(commit.Handle, path, out var jsonPtr));
@@ -587,6 +744,17 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
 `)
 	case "Remote":
 		b.WriteString(`
+    /// <summary>
+    /// Creates a standalone remote for <paramref name="url"/> using in-memory storage.
+    /// No local clone is required. Use <see cref="List"/> to enumerate remote references.
+    /// </summary>
+    public static Remote Create(string url)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitNewRemote(url, out var handle));
+        return new Remote(handle);
+    }
+
+    /// <summary>The name of this remote as recorded in the repository configuration.</summary>
     public string Name
     {
         get
@@ -597,6 +765,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         }
     }
 
+    /// <summary>Returns the full configuration for this remote including URLs and fetch refspecs.</summary>
     public RemoteConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -607,6 +776,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
 `)
 	case "Submodule":
 		b.WriteString(`
+    /// <summary>The name of this submodule as recorded in <c>.gitmodules</c>.</summary>
     public string Name
     {
         get
@@ -617,6 +787,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         }
     }
 
+    /// <summary>Returns the configuration for this submodule (name, path, URL, branch).</summary>
     public SubmoduleConfig GetConfig()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -625,6 +796,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         return JsonSerializer.Deserialize<SubmoduleConfig>(json)!;
     }
 
+    /// <summary>Returns the current sync status of this submodule.</summary>
     public SubmoduleStatusInfo GetStatus()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);

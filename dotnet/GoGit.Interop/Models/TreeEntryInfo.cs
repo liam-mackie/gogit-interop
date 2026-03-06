@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Metadata for a single tree entry (file or subtree), as returned by <see cref="Tree.FindEntry"/>.</summary>
 public sealed class TreeEntryInfo
 {
     [JsonPropertyName("name")]

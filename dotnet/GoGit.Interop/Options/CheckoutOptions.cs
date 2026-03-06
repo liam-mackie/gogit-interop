@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>CheckoutOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class CheckoutOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class CheckoutOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="CheckoutOptions"/> with default values.</summary>
     public CheckoutOptions()
     {
         NativeMethods.GitCheckoutOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>Hash</c> option.</summary>
     public CheckoutOptions SetHash(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Branch</c> option.</summary>
     public CheckoutOptions SetBranch(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Create</c> option.</summary>
     public CheckoutOptions SetCreate(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Force</c> option.</summary>
     public CheckoutOptions SetForce(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Keep</c> option.</summary>
     public CheckoutOptions SetKeep(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SparseCheckoutDirectories</c> option.</summary>
     public CheckoutOptions SetSparseCheckoutDirectories(string[] value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class CheckoutOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

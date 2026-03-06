@@ -3,6 +3,7 @@
 
 namespace GoGit.Interop;
 
+/// <summary>A git tag object. Provides access to tag name, message, tagger, and the tagged object. Wraps <c>*object.Tag</c> from go-git.</summary>
 public sealed class Tag : IDisposable
 {
     private long _handle;
@@ -11,6 +12,7 @@ public sealed class Tag : IDisposable
     internal Tag(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Returns the blob pointed to by this tag.</summary>
     public Blob GetBlob()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -18,6 +20,7 @@ public sealed class Tag : IDisposable
         return new Blob(resultHandle);
     }
 
+    /// <summary>Returns the commit pointed to by this tag.</summary>
     public Commit GetCommit()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -39,6 +42,7 @@ public sealed class Tag : IDisposable
         return NativeMethods.ConsumeGoString(s)!;
     }
 
+    /// <summary>Returns the tree pointed to by this tag.</summary>
     public Tree GetTree()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -53,12 +57,14 @@ public sealed class Tag : IDisposable
         return val;
     }
 
+    /// <summary>Verifies the PGP signature of this tag against <paramref name="armoredKeyRing"/>. Throws if the signature is invalid or missing.</summary>
     public void Verify(string armoredKeyRing)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitTagVerify(_handle, armoredKeyRing));
     }
 
+    /// <summary>The SHA-1 hash of this tag object.</summary>
     public string Hash
     {
         get
@@ -69,6 +75,7 @@ public sealed class Tag : IDisposable
         }
     }
 
+    /// <summary>The tag name.</summary>
     public string Name
     {
         get
@@ -79,6 +86,7 @@ public sealed class Tag : IDisposable
         }
     }
 
+    /// <summary>The tag message.</summary>
     public string Message
     {
         get
@@ -99,6 +107,7 @@ public sealed class Tag : IDisposable
         }
     }
 
+    /// <summary>The SHA-1 hash of the tagged object.</summary>
     public string Target
     {
         get

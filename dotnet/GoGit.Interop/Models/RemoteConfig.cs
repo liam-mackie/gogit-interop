@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a git remote (name, URLs, fetch refspecs), as returned by <see cref="Remote.GetConfig"/>.</summary>
 public sealed class RemoteConfig
 {
     [JsonPropertyName("name")]

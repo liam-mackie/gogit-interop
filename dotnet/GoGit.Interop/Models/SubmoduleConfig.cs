@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Configuration for a git submodule (name, path, URL, branch), as returned by <see cref="Submodule.GetConfig"/>.</summary>
 public sealed class SubmoduleConfig
 {
     [JsonPropertyName("name")]

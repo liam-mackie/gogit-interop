@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Sync status of a submodule, as returned by <see cref="Submodule.GetStatus"/>.</summary>
 public sealed class SubmoduleStatusInfo
 {
     [JsonPropertyName("path")]

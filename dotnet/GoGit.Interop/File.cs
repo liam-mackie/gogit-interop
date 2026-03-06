@@ -4,6 +4,7 @@ using System.Text.Json;
 
 namespace GoGit.Interop;
 
+/// <summary>A file inside a git tree. Provides access to the file name, hash, and contents. Wraps <c>*object.File</c> from go-git.</summary>
 public sealed class File : IDisposable
 {
     private long _handle;
@@ -34,6 +35,7 @@ public sealed class File : IDisposable
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
 
+    /// <summary>The file path relative to the repository root.</summary>
     public string Name
     {
         get

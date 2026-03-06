@@ -6,13 +6,13 @@ package main
 */
 import "C"
 import (
-	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/ProtonMail/go-crypto/openpgp"
 	"encoding/json"
 	"time"
-	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/transport"
-	"github.com/go-git/go-git/v6/config"
 	git "github.com/go-git/go-git/v6"
 )
 

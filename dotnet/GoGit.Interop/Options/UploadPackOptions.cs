@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>UploadPackOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class UploadPackOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class UploadPackOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="UploadPackOptions"/> with default values.</summary>
     public UploadPackOptions()
     {
         NativeMethods.GitUploadPackOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>GitProtocol</c> option.</summary>
     public UploadPackOptions SetGitProtocol(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class UploadPackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>AdvertiseRefs</c> option.</summary>
     public UploadPackOptions SetAdvertiseRefs(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class UploadPackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>StatelessRPC</c> option.</summary>
     public UploadPackOptions SetStatelessRPC(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class UploadPackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

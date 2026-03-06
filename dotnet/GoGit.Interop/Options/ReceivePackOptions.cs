@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>ReceivePackOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class ReceivePackOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class ReceivePackOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="ReceivePackOptions"/> with default values.</summary>
     public ReceivePackOptions()
     {
         NativeMethods.GitReceivePackOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>GitProtocol</c> option.</summary>
     public ReceivePackOptions SetGitProtocol(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class ReceivePackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>AdvertiseRefs</c> option.</summary>
     public ReceivePackOptions SetAdvertiseRefs(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class ReceivePackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>StatelessRPC</c> option.</summary>
     public ReceivePackOptions SetStatelessRPC(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class ReceivePackOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

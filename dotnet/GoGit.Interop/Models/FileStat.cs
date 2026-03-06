@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 
 namespace GoGit.Interop;
 
+/// <summary>Per-file line addition/deletion statistics for a commit, as returned by <see cref="Commit.Stats"/>.</summary>
 public sealed class FileStat
 {
     [JsonPropertyName("name")]

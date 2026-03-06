@@ -91,6 +91,10 @@ internal static partial class NativeMethods
         long rHandle, out IntPtr strOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitNewRemote(
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRemoteConfigName(
         long remoteHandle, out IntPtr nameOut);
 

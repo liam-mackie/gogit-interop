@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>CommitOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class CommitOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class CommitOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="CommitOptions"/> with default values.</summary>
     public CommitOptions()
     {
         NativeMethods.GitCommitOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>All</c> option.</summary>
     public CommitOptions SetAll(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>AllowEmptyCommits</c> option.</summary>
     public CommitOptions SetAllowEmptyCommits(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Signer</c> option.</summary>
     public CommitOptions SetSigner(Signer value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Amend</c> option.</summary>
     public CommitOptions SetAmend(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Author</c> option.</summary>
     public CommitOptions SetAuthor(string name, string email)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -49,6 +56,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Committer</c> option.</summary>
     public CommitOptions SetCommitter(string name, string email)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -56,6 +64,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Parents</c> option.</summary>
     public CommitOptions SetParents(params string[] hashes)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -63,6 +72,7 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

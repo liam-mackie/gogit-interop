@@ -2,6 +2,7 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>Options for a go-git <c>AddOptions</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class AddOptions : IDisposable
 {
     private long _handle;
@@ -9,11 +10,13 @@ public sealed class AddOptions : IDisposable
 
     internal long Handle => _handle;
 
+    /// <summary>Initialises a new <see cref="AddOptions"/> with default values.</summary>
     public AddOptions()
     {
         NativeMethods.GitAddOptionsNew(out _handle);
     }
 
+    /// <summary>Sets the <c>All</c> option.</summary>
     public AddOptions SetAll(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -21,6 +24,7 @@ public sealed class AddOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Path</c> option.</summary>
     public AddOptions SetPath(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -28,6 +32,7 @@ public sealed class AddOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>Glob</c> option.</summary>
     public AddOptions SetGlob(string value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -35,6 +40,7 @@ public sealed class AddOptions : IDisposable
         return this;
     }
 
+    /// <summary>Sets the <c>SkipStatus</c> option.</summary>
     public AddOptions SetSkipStatus(bool value)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,6 +48,7 @@ public sealed class AddOptions : IDisposable
         return this;
     }
 
+    /// <summary>Releases the underlying go-git options object.</summary>
     public void Dispose()
     {
         if (_disposed) return;

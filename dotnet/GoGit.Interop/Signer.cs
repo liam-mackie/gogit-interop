@@ -2,6 +2,11 @@
 #nullable enable
 namespace GoGit.Interop;
 
+/// <summary>
+/// A signing key used to GPG-sign git commits and tags.
+/// Use <see cref="FromPGPKey"/> to load an armored PGP private key, then pass the instance
+/// to <see cref="CommitOptions"/> or <see cref="CreateTagOptions"/> via <c>SetSigner</c>.
+/// </summary>
 public sealed class Signer : IDisposable
 {
     private long _handle;
@@ -10,6 +15,7 @@ public sealed class Signer : IDisposable
     internal Signer(long handle) => _handle = handle;
     internal long Handle => _handle;
 
+    /// <summary>Loads a PGP signing key from an ASCII-armored private key string.</summary>
     public static Signer FromPGPKey(string armoredKey, string passphrase = "")
     {
         NativeMethods.ThrowIfError(NativeMethods.GitSignerNewPGP(armoredKey, passphrase, out var handle));
