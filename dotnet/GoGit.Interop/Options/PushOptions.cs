@@ -98,6 +98,20 @@ public sealed class PushOptions : IDisposable
         return this;
     }
 
+    public PushOptions SetProxy(string url, string? username = null, string? password = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitPushOptionsSetProxy(_handle, url, username ?? "", password ?? ""));
+        return this;
+    }
+
+    public PushOptions SetForceWithLease(string refName, string hash)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitPushOptionsSetForceWithLease(_handle, refName, hash));
+        return this;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

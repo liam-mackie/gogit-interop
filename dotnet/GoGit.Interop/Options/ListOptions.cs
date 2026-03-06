@@ -42,6 +42,13 @@ public sealed class ListOptions : IDisposable
         return this;
     }
 
+    public ListOptions SetProxy(string url, string? username = null, string? password = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitListOptionsSetProxy(_handle, url, username ?? "", password ?? ""));
+        return this;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

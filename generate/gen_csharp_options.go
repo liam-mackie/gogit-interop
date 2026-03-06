@@ -138,6 +138,30 @@ func generateCSharpOptions(pkg *Package, dir string) error {
 					NativeMethod: opts.CPrefix + "AddFile", Args: "path"},
 			)
 		}
+		if hasProxyOptions(opts.GoName) {
+			data.ExtraSetters = append(data.ExtraSetters,
+				extraSetterData{ClassName: opts.GoName, MethodName: "SetProxy", Params: "string url, string? username = null, string? password = null",
+					NativeMethod: opts.CPrefix + "SetProxy", Args: "url, username ?? \"\", password ?? \"\""},
+			)
+		}
+		if opts.GoName == "CommitOptions" {
+			data.ExtraSetters = append(data.ExtraSetters,
+				extraSetterData{ClassName: opts.GoName, MethodName: "SetParents", Params: "params string[] hashes",
+					NativeMethod: opts.CPrefix + "SetParents", Args: "System.Text.Json.JsonSerializer.Serialize(hashes)"},
+			)
+		}
+		if opts.GoName == "PushOptions" {
+			data.ExtraSetters = append(data.ExtraSetters,
+				extraSetterData{ClassName: opts.GoName, MethodName: "SetForceWithLease", Params: "string refName, string hash",
+					NativeMethod: opts.CPrefix + "SetForceWithLease", Args: "refName, hash"},
+			)
+		}
+		if opts.GoName == "CreateTagOptions" {
+			data.ExtraSetters = append(data.ExtraSetters,
+				extraSetterData{ClassName: opts.GoName, MethodName: "SetSignKey", Params: "long signingKeyHandle",
+					NativeMethod: opts.CPrefix + "SetSignKey", Args: "signingKeyHandle"},
+			)
+		}
 
 		var b strings.Builder
 		if err := optionsTemplate.Execute(&b, data); err != nil {
@@ -208,6 +232,31 @@ func nativeMethodsOptionsSection(b *strings.Builder, pkg *Package) {
 		if opts.GoName == "RestoreOptions" {
 			fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
 			fmt.Fprintf(b, "    public static extern IntPtr %sAddFile(long handle, [MarshalAs(UnmanagedType.LPUTF8Str)] string path);\n\n", opts.CPrefix)
+		}
+		if hasProxyOptions(opts.GoName) {
+			fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
+			fmt.Fprintf(b, "    public static extern IntPtr %sSetProxy(\n", opts.CPrefix)
+			fmt.Fprintf(b, "        long handle,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);\n\n")
+		}
+		if opts.GoName == "CommitOptions" {
+			fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
+			fmt.Fprintf(b, "    public static extern IntPtr %sSetParents(\n", opts.CPrefix)
+			fmt.Fprintf(b, "        long handle,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string jsonHashes);\n\n")
+		}
+		if opts.GoName == "PushOptions" {
+			fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
+			fmt.Fprintf(b, "    public static extern IntPtr %sSetForceWithLease(\n", opts.CPrefix)
+			fmt.Fprintf(b, "        long handle,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string refName,\n")
+			fmt.Fprintf(b, "        [MarshalAs(UnmanagedType.LPUTF8Str)] string hash);\n\n")
+		}
+		if opts.GoName == "CreateTagOptions" {
+			fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
+			fmt.Fprintf(b, "    public static extern IntPtr %sSetSignKey(long handle, long keyHandle);\n\n", opts.CPrefix)
 		}
 
 		fmt.Fprintf(b, "    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")

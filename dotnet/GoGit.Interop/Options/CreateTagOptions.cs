@@ -28,6 +28,13 @@ public sealed class CreateTagOptions : IDisposable
         return this;
     }
 
+    public CreateTagOptions SetSignKey(long signingKeyHandle)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitCreateTagOptionsSetSignKey(_handle, signingKeyHandle));
+        return this;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

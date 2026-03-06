@@ -16,19 +16,12 @@ public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
         {
             var err = NativeMethods.GitCommitIterNext(
                 _handle,
-                out var hash, out var msg, out var name, out var email, out var ts, out var eof);
+                out var commitHandle, out var eof);
             NativeMethods.ThrowIfError(err);
 
             if (eof != 0) yield break;
 
-            yield return new Commit
-            {
-                Hash = NativeMethods.ConsumeGoString(hash)!,
-                Message = NativeMethods.ConsumeGoString(msg)!,
-                AuthorName = NativeMethods.ConsumeGoString(name)!,
-                AuthorEmail = NativeMethods.ConsumeGoString(email)!,
-                AuthorTimestamp = DateTimeOffset.FromUnixTimeSeconds(ts),
-            };
+            yield return new Commit(commitHandle);
         }
     }
 

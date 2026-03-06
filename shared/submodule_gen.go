@@ -6,9 +6,9 @@ package main
 */
 import "C"
 import (
-	"context"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
+	"context"
 )
 
 //export GitSubmoduleInit
@@ -40,13 +40,7 @@ func GitSubmoduleUpdate(sHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid submodule handle")
 	}
-	return toCError(recv.Update(func() *git.SubmoduleUpdateOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.SubmoduleUpdateOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Update(func() *git.SubmoduleUpdateOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.SubmoduleUpdateOptions](int64(oHandle)); return v }()))
 }
 
 //export GitSubmoduleUpdateContext
@@ -55,13 +49,7 @@ func GitSubmoduleUpdateContext(sHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid submodule handle")
 	}
-	return toCError(recv.UpdateContext(context.Background(), func() *git.SubmoduleUpdateOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.SubmoduleUpdateOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.UpdateContext(context.Background(), func() *git.SubmoduleUpdateOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.SubmoduleUpdateOptions](int64(oHandle)); return v }()))
 }
 
 //export GitSubmoduleConfigName
@@ -71,6 +59,58 @@ func GitSubmoduleConfigName(subHandle C.longlong, nameOut **C.char) *C.char {
 		return C.CString("invalid submodule handle")
 	}
 	*nameOut = C.CString(sub.Config().Name)
+	return nil
+}
+
+//export GitSubmoduleConfig
+func GitSubmoduleConfig(subHandle C.longlong, jsonOut **C.char) *C.char {
+	sub, ok := loadHandle[*git.Submodule](int64(subHandle))
+	if !ok {
+		return C.CString("invalid submodule handle")
+	}
+	cfg := sub.Config()
+	type subConfigJSON struct {
+		Name   string `json:"name"`
+		Path   string `json:"path"`
+		URL    string `json:"url"`
+		Branch string `json:"branch"`
+	}
+	out := subConfigJSON{Name: cfg.Name, Path: cfg.Path, URL: cfg.URL, Branch: string(cfg.Branch)}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
+	return nil
+}
+
+//export GitSubmoduleStatus
+func GitSubmoduleStatus(subHandle C.longlong, jsonOut **C.char) *C.char {
+	sub, ok := loadHandle[*git.Submodule](int64(subHandle))
+	if !ok {
+		return C.CString("invalid submodule handle")
+	}
+	status, err := sub.Status()
+	if err != nil {
+		return toCError(err)
+	}
+	type statusJSON struct {
+		Path     string `json:"path"`
+		Current  string `json:"current"`
+		Expected string `json:"expected"`
+		Branch   string `json:"branch"`
+	}
+	out := statusJSON{
+		Path:     status.Path,
+		Current:  status.Current.String(),
+		Expected: status.Expected.String(),
+		Branch:   string(status.Branch),
+	}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
 	return nil
 }
 

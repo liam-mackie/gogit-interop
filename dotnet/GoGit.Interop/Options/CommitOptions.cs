@@ -56,6 +56,13 @@ public sealed class CommitOptions : IDisposable
         return this;
     }
 
+    public CommitOptions SetParents(params string[] hashes)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitCommitOptionsSetParents(_handle, System.Text.Json.JsonSerializer.Serialize(hashes)));
+        return this;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

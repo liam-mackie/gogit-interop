@@ -60,6 +60,7 @@ func generateHandleTypesGo(pkg *Package, outputDir string) error {
 		}
 
 		generateExtraMethodsGo(&b, &ht)
+		generateFieldGetters(&b, &ht)
 		generateHandleFree(&b, &ht)
 		writeSuppressImports(&b, &ht, imports)
 
@@ -103,7 +104,7 @@ func findNonRepoFunctions(pkg *Package) []Function {
 
 func collectImports(ht *HandleType, isRepo bool) []string {
 	importSet := map[string]bool{
-		"encoding/json": true,
+		"\"encoding/json\"": true,
 	}
 
 	addPackageImport(importSet, ht.ImportPath)
@@ -117,6 +118,13 @@ func collectImports(ht *HandleType, isRepo bool) []string {
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/config")
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing")
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing/transport")
+		addPackageImport(importSet, "github.com/go-git/go-git/v6/storage/memory")
+		addPackageImport(importSet, "github.com/go-git/go-billy/v6/memfs")
+		importSet["billy \"github.com/go-git/go-billy/v6\""] = true
+	}
+
+	for _, imp := range extraImportsForType(ht.GoName) {
+		importSet[imp] = true
 	}
 
 	var imports []string
@@ -224,39 +232,9 @@ func generateTopLevelFunction(b *strings.Builder, fn Function) {
 
 	fmt.Fprintf(b, "func %s(%s) *C.char {\n", fn.CName, strings.Join(params, ", "))
 
-	generateFunctionBody(b, fn, hasHandleReturn)
+	generateGenericFunctionBody(b, fn, hasHandleReturn)
 
 	b.WriteString("}\n\n")
-}
-
-func isSpecialFunction(name string) bool {
-	return name == "Clone" || name == "CloneContext"
-}
-
-func generateFunctionBody(b *strings.Builder, fn Function, hasHandleReturn bool) {
-	switch fn.GoName {
-	case "Clone", "CloneContext":
-		optsParam := fn.Params[0].CName
-		goCall := "git.Clone"
-		if fn.HasContext {
-			goCall = "git.CloneContext"
-		}
-		fmt.Fprintf(b, "\topts, ok := loadHandle[*git.CloneOptions](int64(%s))\n", optsParam)
-		b.WriteString("\tif !ok {\n\t\treturn C.CString(\"invalid CloneOptions handle\")\n\t}\n")
-		b.WriteString("\tstorer := memory.NewStorage()\n")
-		b.WriteString("\tvar wt billy.Filesystem\n")
-		b.WriteString("\tif !opts.Bare {\n\t\twt = memfs.New()\n\t}\n")
-		if fn.HasContext {
-			fmt.Fprintf(b, "\trepo, err := %s(context.Background(), storer, wt, opts)\n", goCall)
-		} else {
-			fmt.Fprintf(b, "\trepo, err := %s(storer, wt, opts)\n", goCall)
-		}
-		b.WriteString("\tif err != nil {\n\t\treturn toCError(err)\n\t}\n")
-		b.WriteString("\t*handleOut = C.longlong(storeHandle(repo))\n")
-		b.WriteString("\treturn nil\n")
-	default:
-		generateGenericFunctionBody(b, fn, hasHandleReturn)
-	}
 }
 
 func generateGenericFunctionBody(b *strings.Builder, fn Function, hasHandleReturn bool) {
@@ -414,6 +392,8 @@ func outParamsForReturn(r Return, idx int) []outParam {
 		return []outParam{{name: fmt.Sprintf("out%d", idx), cType: "C.int"}}
 	case MappingBool:
 		return []outParam{{name: fmt.Sprintf("out%d", idx), cType: "C.int"}}
+	case MappingEnum:
+		return []outParam{{name: fmt.Sprintf("out%d", idx), cType: "C.int"}}
 	case MappingTime, MappingDuration:
 		return []outParam{{name: fmt.Sprintf("out%d", idx), cType: "C.longlong"}}
 	case MappingStringSlice:
@@ -515,6 +495,8 @@ func writeReturnConversion(b *strings.Builder, r Return, rVar string, outParams 
 		}
 	case MappingBool:
 		fmt.Fprintf(b, "\tif %s {\n\t\t*%s = 1\n\t} else {\n\t\t*%s = 0\n\t}\n", rVar, outName, outName)
+	case MappingEnum:
+		fmt.Fprintf(b, "\t*%s = C.int(%s)\n", outName, rVar)
 	case MappingTime:
 		fmt.Fprintf(b, "\t*%s = C.longlong(%s.Unix())\n", outName, rVar)
 	case MappingDuration:
@@ -530,6 +512,16 @@ func resolveGoReceiverType(ht *HandleType) string {
 		return "*" + prefix + ht.GoName
 	}
 	return prefix + ht.GoName
+}
+
+func extraImportsForType(htName string) []string {
+	switch htName {
+	case "Blob":
+		return []string{"\"io\""}
+	case "Commit":
+		return []string{"\"time\""}
+	}
+	return nil
 }
 
 func importAlias(pkgPath string) string {
@@ -551,6 +543,67 @@ func importAlias(pkgPath string) string {
 	default:
 		parts := strings.Split(pkgPath, "/")
 		return parts[len(parts)-1]
+	}
+}
+
+func generateFieldGetters(b *strings.Builder, ht *HandleType) {
+	for _, f := range ht.Fields {
+		outParamType := fieldGetterCOutType(f)
+		if outParamType == "" {
+			continue
+		}
+
+		receiverParam := strings.ToLower(ht.GoName[:1]) + "Handle"
+		fmt.Fprintf(b, "//export %s\n", f.CGetterName)
+		fmt.Fprintf(b, "func %s(%s C.longlong, out %s) *C.char {\n", f.CGetterName, receiverParam, outParamType)
+
+		goReceiverType := resolveGoReceiverType(ht)
+		fmt.Fprintf(b, "\trecv, ok := loadHandle[%s](int64(%s))\n", goReceiverType, receiverParam)
+		fmt.Fprintf(b, "\tif !ok {\n\t\treturn C.CString(\"invalid %s handle\")\n\t}\n", strings.ToLower(ht.GoName))
+
+		switch f.Mapping.Kind {
+		case MappingString:
+			if f.GoType == "*string" {
+				fmt.Fprintf(b, "\tif recv.%s != nil {\n\t\t*out = C.CString(*recv.%s)\n\t}\n", f.GoName, f.GoName)
+			} else {
+				fmt.Fprintf(b, "\t*out = C.CString(string(recv.%s))\n", f.GoName)
+			}
+		case MappingHash:
+			fmt.Fprintf(b, "\t*out = C.CString(recv.%s.String())\n", f.GoName)
+		case MappingReferenceName:
+			fmt.Fprintf(b, "\t*out = C.CString(string(recv.%s))\n", f.GoName)
+		case MappingPrimitive:
+			if f.Mapping.CType == "C.longlong" {
+				fmt.Fprintf(b, "\t*out = C.longlong(recv.%s)\n", f.GoName)
+			} else if f.Mapping.CType == "C.uint" {
+				fmt.Fprintf(b, "\t*out = C.uint(recv.%s)\n", f.GoName)
+			} else {
+				fmt.Fprintf(b, "\t*out = C.int(recv.%s)\n", f.GoName)
+			}
+		case MappingBool:
+			fmt.Fprintf(b, "\tif recv.%s {\n\t\t*out = 1\n\t} else {\n\t\t*out = 0\n\t}\n", f.GoName)
+		}
+
+		b.WriteString("\treturn nil\n}\n\n")
+	}
+}
+
+func fieldGetterCOutType(f HandleField) string {
+	switch f.Mapping.Kind {
+	case MappingString, MappingHash, MappingReferenceName:
+		return "**C.char"
+	case MappingPrimitive:
+		if f.Mapping.CType == "C.longlong" {
+			return "*C.longlong"
+		}
+		if f.Mapping.CType == "C.uint" {
+			return "*C.uint"
+		}
+		return "*C.int"
+	case MappingBool:
+		return "*C.int"
+	default:
+		return ""
 	}
 }
 
@@ -578,6 +631,7 @@ func writeSuppressImports(b *strings.Builder, ht *HandleType, imports []string) 
 		"object":    "\t_ object.Signature\n",
 		"storer":    "\t_ storer.ReferenceIter\n",
 		"time":      "\t_ = time.Now\n",
+		"io":        "\t_ = io.ReadAll\n",
 	}
 
 	for _, imp := range imports {

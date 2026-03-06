@@ -1,10 +1,26 @@
 LIB_NAME = libgogit
 SRC = ./shared
 
-.PHONY: generate build-darwin-arm64 build-darwin-amd64 build-linux-amd64 build-windows-amd64 all pack clean
+UNAME_S := $(shell uname -s)
+UNAME_M := $(shell uname -m)
+DEV_VERSION := 0.1.0-dev.$(shell date +%Y%m%d%H%M%S)
+
+ifeq ($(UNAME_S),Darwin)
+  ifeq ($(UNAME_M),arm64)
+    CURRENT_BUILD := build-darwin-arm64
+  else
+    CURRENT_BUILD := build-darwin-amd64
+  endif
+else ifeq ($(UNAME_S),Linux)
+  CURRENT_BUILD := build-linux-amd64
+else
+  CURRENT_BUILD := build-windows-amd64
+endif
+
+.PHONY: generate build-darwin-arm64 build-darwin-amd64 build-linux-amd64 build-windows-amd64 all pack clean dev
 
 generate:
-	go run ./generate
+	cd generate && go run .
 
 build-darwin-arm64:
 	@mkdir -p runtimes/osx-arm64/native
@@ -30,6 +46,10 @@ all: build-darwin-arm64 build-darwin-amd64
 
 pack:
 	cd dotnet && dotnet pack -c Release
+
+dev: generate $(CURRENT_BUILD)
+	cd dotnet && dotnet pack -c Release /p:Version=$(DEV_VERSION)
+	@echo "Packed: dotnet/GoGit.Interop/bin/Release/GoGit.Interop.$(DEV_VERSION).nupkg"
 
 clean:
 	rm -rf runtimes/

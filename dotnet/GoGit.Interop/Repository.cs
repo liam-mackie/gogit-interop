@@ -10,6 +10,7 @@ public sealed class Repository : IDisposable
     private bool _disposed;
 
     internal Repository(long handle) => _handle = handle;
+    internal long Handle => _handle;
 
     public static Repository Init(string path, bool isBare = false)
     {
@@ -35,6 +36,34 @@ public sealed class Repository : IDisposable
         return new Repository(handle);
     }
 
+    public static Repository CloneInMemory(CloneOptions options)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitCloneInMemory(options.Handle, out var handle));
+        return new Repository(handle);
+    }
+
+    public Blob GetBlobObject(string h)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryBlobObject(_handle, h, out var resultHandle));
+        return new Blob(resultHandle);
+    }
+
+    public BlobIterator BlobObjects()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryBlobObjects(_handle, out var iter));
+        return new BlobIterator(iter);
+    }
+
+    public BranchConfig GetBranch(string name)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryBranch(_handle, name, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<BranchConfig>(json)!;
+    }
+
     public ReferenceIterator Branches()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -42,20 +71,11 @@ public sealed class Repository : IDisposable
         return new ReferenceIterator(iter);
     }
 
-    public Commit GetCommitObject(string hash)
+    public Commit GetCommitObject(string h)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCommitObject(
-            _handle, hash,
-            out var commitHash, out var msg, out var authorName, out var authorEmail, out var ts));
-        return new Commit
-        {
-            Hash = NativeMethods.ConsumeGoString(commitHash)!,
-            Message = NativeMethods.ConsumeGoString(msg)!,
-            AuthorName = NativeMethods.ConsumeGoString(authorName)!,
-            AuthorEmail = NativeMethods.ConsumeGoString(authorEmail)!,
-            AuthorTimestamp = DateTimeOffset.FromUnixTimeSeconds(ts),
-        };
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCommitObject(_handle, h, out var resultHandle));
+        return new Commit(resultHandle);
     }
 
     public CommitIterator CommitObjects()
@@ -63,6 +83,14 @@ public sealed class Repository : IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCommitObjects(_handle, out var iter));
         return new CommitIterator(iter);
+    }
+
+    public GitConfig GetConfig()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryConfig(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<GitConfig>(json)!;
     }
 
     public void CreateBranch(string name, string hash)
@@ -75,6 +103,13 @@ public sealed class Repository : IDisposable
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCreateRemote(_handle, name, url, out var handle));
+        return new Remote(handle);
+    }
+
+    public Remote CreateRemoteAnonymous(string url)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCreateRemoteAnonymous(_handle, url, out var handle));
         return new Remote(handle);
     }
 
@@ -178,8 +213,8 @@ public sealed class Repository : IDisposable
     public Remote GetRemote(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryRemote(_handle, name, out var h));
-        return new Remote(h);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryRemote(_handle, name, out var resultHandle));
+        return new Remote(resultHandle);
     }
 
     public string ResolveRevision(string input)
@@ -196,6 +231,20 @@ public sealed class Repository : IDisposable
         return (NativeMethods.ConsumeGoString(outRefName)!, NativeMethods.ConsumeGoString(outHash)!);
     }
 
+    public Tag GetTagObject(string h)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryTagObject(_handle, h, out var resultHandle));
+        return new Tag(resultHandle);
+    }
+
+    public TagIterator TagObjects()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryTagObjects(_handle, out var iter));
+        return new TagIterator(iter);
+    }
+
     public ReferenceIterator Tags()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -203,11 +252,25 @@ public sealed class Repository : IDisposable
         return new ReferenceIterator(iter);
     }
 
+    public Tree GetTreeObject(string h)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryTreeObject(_handle, h, out var resultHandle));
+        return new Tree(resultHandle);
+    }
+
+    public TreeIterator TreeObjects()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryTreeObjects(_handle, out var iter));
+        return new TreeIterator(iter);
+    }
+
     public Worktree GetWorktree()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryWorktree(_handle, out var h));
-        return new Worktree(h);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryWorktree(_handle, out var resultHandle));
+        return new Worktree(resultHandle);
     }
 
     public string[] Remotes()
@@ -216,6 +279,13 @@ public sealed class Repository : IDisposable
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryRemotes(_handle, out var jsonPtr));
         var json = NativeMethods.ConsumeGoString(jsonPtr)!;
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
+    }
+
+    public static BlameResult Blame(Commit commit, string path)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitBlame(commit.Handle, path, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<BlameResult>(json)!;
     }
 
     public void Dispose()

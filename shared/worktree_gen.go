@@ -6,10 +6,10 @@ package main
 */
 import "C"
 import (
-	"context"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
+	"context"
 )
 
 //export GitWorktreeAdd
@@ -41,13 +41,7 @@ func GitWorktreeAddWithOptions(wHandle C.longlong, optsHandle C.longlong) *C.cha
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.AddWithOptions(func() *git.AddOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.AddOptions](int64(optsHandle))
-		return v
-	}()))
+	return toCError(recv.AddWithOptions(func() *git.AddOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.AddOptions](int64(optsHandle)); return v }()))
 }
 
 //export GitWorktreeCheckout
@@ -56,13 +50,7 @@ func GitWorktreeCheckout(wHandle C.longlong, optsHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.Checkout(func() *git.CheckoutOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.CheckoutOptions](int64(optsHandle))
-		return v
-	}()))
+	return toCError(recv.Checkout(func() *git.CheckoutOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.CheckoutOptions](int64(optsHandle)); return v }()))
 }
 
 //export GitWorktreeCherryPick
@@ -80,13 +68,7 @@ func GitWorktreeClean(wHandle C.longlong, optsHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.Clean(func() *git.CleanOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.CleanOptions](int64(optsHandle))
-		return v
-	}()))
+	return toCError(recv.Clean(func() *git.CleanOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.CleanOptions](int64(optsHandle)); return v }()))
 }
 
 //export GitWorktreeCommit
@@ -95,13 +77,7 @@ func GitWorktreeCommit(wHandle C.longlong, msg *C.char, optsHandle C.longlong, r
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	r0, err := recv.Commit(C.GoString(msg), func() *git.CommitOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.CommitOptions](int64(optsHandle))
-		return v
-	}())
+	r0, err := recv.Commit(C.GoString(msg), func() *git.CommitOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.CommitOptions](int64(optsHandle)); return v }())
 	if err != nil {
 		return toCError(err)
 	}
@@ -129,13 +105,7 @@ func GitWorktreePull(wHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.Pull(func() *git.PullOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PullOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Pull(func() *git.PullOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PullOptions](int64(oHandle)); return v }()))
 }
 
 //export GitWorktreePullContext
@@ -144,13 +114,7 @@ func GitWorktreePullContext(wHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.PullContext(context.Background(), func() *git.PullOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PullOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.PullContext(context.Background(), func() *git.PullOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PullOptions](int64(oHandle)); return v }()))
 }
 
 //export GitWorktreeRemove
@@ -182,13 +146,7 @@ func GitWorktreeReset(wHandle C.longlong, optsHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.Reset(func() *git.ResetOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.ResetOptions](int64(optsHandle))
-		return v
-	}()))
+	return toCError(recv.Reset(func() *git.ResetOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.ResetOptions](int64(optsHandle)); return v }()))
 }
 
 //export GitWorktreeRestore
@@ -197,13 +155,7 @@ func GitWorktreeRestore(wHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid worktree handle")
 	}
-	return toCError(recv.Restore(func() *git.RestoreOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.RestoreOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Restore(func() *git.RestoreOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.RestoreOptions](int64(oHandle)); return v }()))
 }
 
 //export GitWorktreeStatus
@@ -280,6 +232,6 @@ func GitWorktreeFree(wHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ = context.Background
 	_ plumbing.Hash
+	_ = context.Background
 )

@@ -19,6 +19,12 @@ func generateOptionsGo(pkg *Package, outputDir string) error {
 		for _, f := range opts.Fields {
 			addMappingImports(importSet, f.Mapping)
 		}
+		if hasProxyOptions(opts.GoName) {
+			addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing/transport")
+		}
+		if opts.GoName == "CreateTagOptions" {
+			addPackageImport(importSet, "github.com/ProtonMail/go-crypto/openpgp")
+		}
 	}
 	var imports []string
 	for imp := range importSet {
@@ -42,6 +48,7 @@ func generateOptionsGo(pkg *Package, outputDir string) error {
 	b.WriteString("\t_ object.Signature\n")
 	b.WriteString("\t_ plumbing.Hash\n")
 	b.WriteString("\t_ transport.AuthMethod\n")
+	b.WriteString("\t_ *openpgp.Entity\n")
 	b.WriteString(")\n")
 
 	return writeGenFile(outputDir, "options_gen.go", b.String())
@@ -185,9 +192,11 @@ func generateOptionsSpecialSetters(b *strings.Builder, opts OptionsStruct, goTyp
 	if opts.GoName == "CommitOptions" {
 		generateSignatureSetters(b, opts.CPrefix, goType, "Author")
 		generateSignatureSetters(b, opts.CPrefix, goType, "Committer")
+		generateHashSliceSetter(b, opts.CPrefix, goType, "Parents")
 	}
 	if opts.GoName == "CreateTagOptions" {
 		generateSignatureSetters(b, opts.CPrefix, goType, "Tagger")
+		generateSignKeyHandleSetter(b, opts.CPrefix, goType)
 	}
 	if opts.GoName == "RestoreOptions" {
 		fmt.Fprintf(b, "//export %sAddFile\n", opts.CPrefix)
@@ -196,6 +205,68 @@ func generateOptionsSpecialSetters(b *strings.Builder, opts OptionsStruct, goTyp
 		fmt.Fprintf(b, "\topts.Files = append(opts.Files, C.GoString(path))\n")
 		fmt.Fprintf(b, "\treturn nil\n}\n\n")
 	}
+	if hasProxyOptions(opts.GoName) {
+		generateProxySetter(b, opts.CPrefix, goType)
+	}
+	if opts.GoName == "PushOptions" {
+		generateForceWithLeaseSetter(b, opts.CPrefix, goType)
+	}
+}
+
+func hasProxyOptions(name string) bool {
+	switch name {
+	case "CloneOptions", "FetchOptions", "ListOptions", "PullOptions", "PushOptions":
+		return true
+	}
+	return false
+}
+
+func generateProxySetter(b *strings.Builder, cPrefix, goType string) {
+	fmt.Fprintf(b, "//export %sSetProxy\n", cPrefix)
+	fmt.Fprintf(b, "func %sSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {\n", cPrefix)
+	writeOptionsLoad(b, goType, goType[strings.LastIndex(goType, ".")+1:])
+	fmt.Fprintf(b, "\topts.ProxyOptions = transport.ProxyOptions{\n")
+	fmt.Fprintf(b, "\t\tURL:      C.GoString(url),\n")
+	fmt.Fprintf(b, "\t\tUsername: C.GoString(username),\n")
+	fmt.Fprintf(b, "\t\tPassword: C.GoString(password),\n")
+	fmt.Fprintf(b, "\t}\n")
+	fmt.Fprintf(b, "\treturn nil\n}\n\n")
+}
+
+func generateHashSliceSetter(b *strings.Builder, cPrefix, goType, fieldName string) {
+	fmt.Fprintf(b, "//export %sSet%s\n", cPrefix, fieldName)
+	fmt.Fprintf(b, "func %sSet%s(handle C.longlong, jsonHashes *C.char) *C.char {\n", cPrefix, fieldName)
+	writeOptionsLoad(b, goType, goType[strings.LastIndex(goType, ".")+1:])
+	fmt.Fprintf(b, "\tvar hexes []string\n")
+	fmt.Fprintf(b, "\tif err := json.Unmarshal([]byte(C.GoString(jsonHashes)), &hexes); err != nil {\n")
+	fmt.Fprintf(b, "\t\treturn toCError(err)\n\t}\n")
+	fmt.Fprintf(b, "\thashes := make([]plumbing.Hash, len(hexes))\n")
+	fmt.Fprintf(b, "\tfor i, h := range hexes {\n")
+	fmt.Fprintf(b, "\t\thashes[i] = plumbing.NewHash(h)\n")
+	fmt.Fprintf(b, "\t}\n")
+	fmt.Fprintf(b, "\topts.%s = hashes\n", fieldName)
+	fmt.Fprintf(b, "\treturn nil\n}\n\n")
+}
+
+func generateForceWithLeaseSetter(b *strings.Builder, cPrefix, goType string) {
+	fmt.Fprintf(b, "//export %sSetForceWithLease\n", cPrefix)
+	fmt.Fprintf(b, "func %sSetForceWithLease(handle C.longlong, refName *C.char, hash *C.char) *C.char {\n", cPrefix)
+	writeOptionsLoad(b, goType, goType[strings.LastIndex(goType, ".")+1:])
+	fmt.Fprintf(b, "\topts.ForceWithLease = &git.ForceWithLease{\n")
+	fmt.Fprintf(b, "\t\tRefName: plumbing.ReferenceName(C.GoString(refName)),\n")
+	fmt.Fprintf(b, "\t\tHash:    plumbing.NewHash(C.GoString(hash)),\n")
+	fmt.Fprintf(b, "\t}\n")
+	fmt.Fprintf(b, "\treturn nil\n}\n\n")
+}
+
+func generateSignKeyHandleSetter(b *strings.Builder, cPrefix, goType string) {
+	fmt.Fprintf(b, "//export %sSetSignKey\n", cPrefix)
+	fmt.Fprintf(b, "func %sSetSignKey(handle C.longlong, keyHandle C.longlong) *C.char {\n", cPrefix)
+	writeOptionsLoad(b, goType, goType[strings.LastIndex(goType, ".")+1:])
+	fmt.Fprintf(b, "\tentity, ok := loadHandle[*openpgp.Entity](int64(keyHandle))\n")
+	fmt.Fprintf(b, "\tif !ok {\n\t\treturn C.CString(\"invalid signing key handle\")\n\t}\n")
+	fmt.Fprintf(b, "\topts.SignKey = entity\n")
+	fmt.Fprintf(b, "\treturn nil\n}\n\n")
 }
 
 func generateOptionsFree(b *strings.Builder, opts OptionsStruct) {

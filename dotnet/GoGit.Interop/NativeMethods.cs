@@ -95,9 +95,27 @@ internal static partial class NativeMethods
         long remoteHandle, out IntPtr nameOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRemoteConfig(
+        long remoteHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitRemoteFree(long rHandle);
 
     // Repository methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryBlobObject(
+        long rHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string h, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryBlobObjects(
+        long rHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryBranch(
+        long repoHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+        out IntPtr jsonOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryBranches(
@@ -105,17 +123,15 @@ internal static partial class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryCommitObject(
-        long repoHandle,
-        [MarshalAs(UnmanagedType.LPUTF8Str)] string hash,
-        out IntPtr commitHashOut,
-        out IntPtr msgOut,
-        out IntPtr authorNameOut,
-        out IntPtr authorEmailOut,
-        out long tsOut);
+        long rHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string h, out long handleOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryCommitObjects(
         long rHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryConfig(
+        long repoHandle, out IntPtr jsonOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryCreateBranch(
@@ -127,6 +143,12 @@ internal static partial class NativeMethods
     public static extern IntPtr GitRepositoryCreateRemote(
         long repoHandle,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string name,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryCreateRemoteAnonymous(
+        long repoHandle,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
         out long handleOut);
 
@@ -206,7 +228,23 @@ internal static partial class NativeMethods
         long rHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string name, out IntPtr refNameOut, out IntPtr hashOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryTagObject(
+        long rHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string h, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryTagObjects(
+        long rHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryTags(
+        long rHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryTreeObject(
+        long rHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string h, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitRepositoryTreeObjects(
         long rHandle, out long handleOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -216,6 +254,16 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitRepositoryRemotes(
         long repoHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCloneInMemory(
+        long optsHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlame(
+        long commitHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+        out IntPtr jsonOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitRepositoryFree(long rHandle);
@@ -241,6 +289,14 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitSubmoduleConfigName(
         long subHandle, out IntPtr nameOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitSubmoduleConfig(
+        long subHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitSubmoduleStatus(
+        long subHandle, out IntPtr jsonOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitSubmoduleFree(long sHandle);
@@ -318,6 +374,255 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitWorktreeFree(long wHandle);
 
+    // Blob methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobID(
+        long bHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobReader(
+        long bHandle, out IntPtr dataOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobType(
+        long bHandle, out int valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobGetHash(long bHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobGetSize(long bHandle, out long valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitBlobFree(long bHandle);
+
+    // Commit methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitFile(
+        long cHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitFiles(
+        long cHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitID(
+        long cHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitIsAncestor(
+        long cHandle, long otherHandle, out int boolOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitLess(
+        long cHandle, long rhsHandle, out int boolOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitMergeBase(
+        long cHandle, long otherHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitNumParents(
+        long cHandle, out int valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitParent(
+        long cHandle, int i, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitParents(
+        long cHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitPatch(
+        long cHandle, long toHandle, out IntPtr patchOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitStats(
+        long cHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitString(
+        long cHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitTree(
+        long cHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitType(
+        long cHandle, out int valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitVerify(
+        long cHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string armoredKeyRing);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitAuthorName(
+        long cHandle, out IntPtr nameOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitAuthorEmail(
+        long cHandle, out IntPtr emailOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitAuthorWhen(
+        long cHandle, out long tsOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitCommitterName(
+        long cHandle, out IntPtr nameOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitCommitterEmail(
+        long cHandle, out IntPtr emailOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitCommitterWhen(
+        long cHandle, out long tsOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetHash(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetMergeTag(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetSignature(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetMessage(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetTreeHash(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitGetEncoding(long cHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitCommitFree(long cHandle);
+
+    // File methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileContents(
+        long fHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileIsBinary(
+        long fHandle, out int boolOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileLines(
+        long fHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileGetName(long fHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileGetMode(long fHandle, out uint valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitFileFree(long fHandle);
+
+    // Tag methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagBlob(
+        long tHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagCommit(
+        long tHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagID(
+        long tHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagString(
+        long tHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagTree(
+        long tHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagType(
+        long tHandle, out int valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagVerify(
+        long tHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string armoredKeyRing);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagGetHash(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagGetName(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagGetMessage(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagGetSignature(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagGetTarget(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTagFree(long tHandle);
+
+    // Tree methods
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeDiff(
+        long tHandle, long toHandle, out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeFile(
+        long tHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeFiles(
+        long tHandle, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeFindEntry(
+        long tHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+        out IntPtr jsonOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeID(
+        long tHandle, out IntPtr strOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreePatch(
+        long tHandle, long toHandle, out IntPtr patchOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeSize(
+        long tHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, out long valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeTree(
+        long tHandle, [MarshalAs(UnmanagedType.LPUTF8Str)] string path, out long handleOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeType(
+        long tHandle, out int valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeGetHash(long tHandle, out IntPtr valOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTreeFree(long tHandle);
+
     // Auth constructors
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -389,11 +694,7 @@ internal static partial class NativeMethods
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitCommitIterNext(
         long iterHandle,
-        out IntPtr hashOut,
-        out IntPtr msgOut,
-        out IntPtr authorNameOut,
-        out IntPtr authorEmailOut,
-        out long tsOut,
+        out long handleOut,
         out int eofOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -408,6 +709,42 @@ internal static partial class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitReferenceIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitFileIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTreeIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitBlobIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTagIterFree(long iterHandle);
 
     // AddOptions
 
@@ -514,6 +851,13 @@ internal static partial class NativeMethods
     public static extern IntPtr GitCloneOptionsSetBare(long handle, int val);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCloneOptionsSetProxy(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitCloneOptionsFree(long handle);
 
     // CommitOptions
@@ -546,6 +890,11 @@ internal static partial class NativeMethods
         [MarshalAs(UnmanagedType.LPUTF8Str)] string email);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCommitOptionsSetParents(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string jsonHashes);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitCommitOptionsFree(long handle);
 
     // CreateTagOptions
@@ -561,6 +910,9 @@ internal static partial class NativeMethods
         long handle,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string name,
         [MarshalAs(UnmanagedType.LPUTF8Str)] string email);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitCreateTagOptionsSetSignKey(long handle, long keyHandle);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitCreateTagOptionsFree(long handle);
@@ -598,6 +950,13 @@ internal static partial class NativeMethods
     public static extern IntPtr GitFetchOptionsSetPrune(long handle, int val);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFetchOptionsSetProxy(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitFetchOptionsFree(long handle);
 
     // GrepOptions
@@ -633,6 +992,13 @@ internal static partial class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitListOptionsSetTimeout(long handle, int val);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitListOptionsSetProxy(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitListOptionsFree(long handle);
@@ -732,6 +1098,13 @@ internal static partial class NativeMethods
     public static extern IntPtr GitPullOptionsSetInsecureSkipTLS(long handle, int val);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitPullOptionsSetProxy(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitPullOptionsFree(long handle);
 
     // PushOptions
@@ -774,6 +1147,19 @@ internal static partial class NativeMethods
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitPushOptionsSetQuiet(long handle, int val);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitPushOptionsSetProxy(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string url,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string username,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string password);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitPushOptionsSetForceWithLease(
+        long handle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string refName,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string hash);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitPushOptionsFree(long handle);

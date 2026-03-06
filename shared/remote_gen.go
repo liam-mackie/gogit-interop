@@ -6,9 +6,9 @@ package main
 */
 import "C"
 import (
+	git "github.com/go-git/go-git/v6"
 	"context"
 	"encoding/json"
-	git "github.com/go-git/go-git/v6"
 )
 
 //export GitRemoteFetch
@@ -17,13 +17,7 @@ func GitRemoteFetch(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid remote handle")
 	}
-	return toCError(recv.Fetch(func() *git.FetchOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.FetchOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Fetch(func() *git.FetchOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.FetchOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRemoteFetchContext
@@ -32,13 +26,7 @@ func GitRemoteFetchContext(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid remote handle")
 	}
-	return toCError(recv.FetchContext(context.Background(), func() *git.FetchOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.FetchOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.FetchContext(context.Background(), func() *git.FetchOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.FetchOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRemoteList
@@ -77,13 +65,7 @@ func GitRemotePush(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid remote handle")
 	}
-	return toCError(recv.Push(func() *git.PushOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PushOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Push(func() *git.PushOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PushOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRemotePushContext
@@ -92,13 +74,7 @@ func GitRemotePushContext(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid remote handle")
 	}
-	return toCError(recv.PushContext(context.Background(), func() *git.PushOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PushOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.PushContext(context.Background(), func() *git.PushOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PushOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRemoteString
@@ -119,6 +95,31 @@ func GitRemoteConfigName(remoteHandle C.longlong, nameOut **C.char) *C.char {
 		return C.CString("invalid remote handle")
 	}
 	*nameOut = C.CString(remote.Config().Name)
+	return nil
+}
+
+//export GitRemoteConfig
+func GitRemoteConfig(remoteHandle C.longlong, jsonOut **C.char) *C.char {
+	remote, ok := loadHandle[*git.Remote](int64(remoteHandle))
+	if !ok {
+		return C.CString("invalid remote handle")
+	}
+	cfg := remote.Config()
+	type remoteConfigJSON struct {
+		Name  string   `json:"name"`
+		URLs  []string `json:"urls"`
+		Fetch []string `json:"fetch"`
+	}
+	fetchSpecs := make([]string, len(cfg.Fetch))
+	for i, f := range cfg.Fetch {
+		fetchSpecs[i] = string(f)
+	}
+	out := remoteConfigJSON{Name: cfg.Name, URLs: cfg.URLs, Fetch: fetchSpecs}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
 	return nil
 }
 

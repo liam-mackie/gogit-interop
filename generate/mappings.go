@@ -13,6 +13,13 @@ var (
 	mappingMu      sync.Mutex
 )
 
+var knownPointerIterators = map[string]string{
+	"github.com/go-git/go-git/v6/plumbing/object.FileIter": "FileIter",
+	"github.com/go-git/go-git/v6/plumbing/object.TreeIter": "TreeIter",
+	"github.com/go-git/go-git/v6/plumbing/object.BlobIter": "BlobIter",
+	"github.com/go-git/go-git/v6/plumbing/object.TagIter":  "TagIter",
+}
+
 func registerHandleMapping(qname, handleName string) {
 	mappingMu.Lock()
 	defer mappingMu.Unlock()
@@ -67,6 +74,11 @@ func resolveTypeMapping(t types.Type) TypeMapping {
 		}
 		if ptrQName == "github.com/go-git/go-git/v6/plumbing.Hash" || ptrQName == "github.com/go-git/go-git/v6/plumbing.ObjectID" {
 			return TypeMapping{Kind: MappingHash, GoType: "*plumbing.Hash", CType: "*C.char", CSharpType: "string", QualifiedName: ptrQName}
+		}
+
+		if iterHandle, ok := knownPointerIterators[ptrQName]; ok {
+			qname := pkg.Path() + ".*" + named.Obj().Name()
+			return TypeMapping{Kind: MappingIterator, GoType: "*object." + named.Obj().Name(), CType: "C.longlong", CSharpType: "long", HandleType: iterHandle, QualifiedName: qname}
 		}
 
 		qname := pkg.Path() + ".*" + named.Obj().Name()
@@ -238,6 +250,14 @@ func resolveMapping(goType string) TypeMapping {
 		return TypeMapping{Kind: MappingIterator, GoType: "object.CommitIter", CType: "C.longlong", CSharpType: "long", HandleType: "CommitIter"}
 	case "storer.ReferenceIter":
 		return TypeMapping{Kind: MappingIterator, GoType: "storer.ReferenceIter", CType: "C.longlong", CSharpType: "long", HandleType: "ReferenceIter"}
+	case "*object.FileIter":
+		return TypeMapping{Kind: MappingIterator, GoType: "*object.FileIter", CType: "C.longlong", CSharpType: "long", HandleType: "FileIter"}
+	case "*object.TreeIter":
+		return TypeMapping{Kind: MappingIterator, GoType: "*object.TreeIter", CType: "C.longlong", CSharpType: "long", HandleType: "TreeIter"}
+	case "*object.BlobIter":
+		return TypeMapping{Kind: MappingIterator, GoType: "*object.BlobIter", CType: "C.longlong", CSharpType: "long", HandleType: "BlobIter"}
+	case "*object.TagIter":
+		return TypeMapping{Kind: MappingIterator, GoType: "*object.TagIter", CType: "C.longlong", CSharpType: "long", HandleType: "TagIter"}
 	}
 
 	if name, ok := dynamicHandles["*"+goType]; ok {

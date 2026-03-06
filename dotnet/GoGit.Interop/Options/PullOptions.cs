@@ -77,6 +77,13 @@ public sealed class PullOptions : IDisposable
         return this;
     }
 
+    public PullOptions SetProxy(string url, string? username = null, string? password = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitPullOptionsSetProxy(_handle, url, username ?? "", password ?? ""));
+        return this;
+    }
+
     public void Dispose()
     {
         if (_disposed) return;

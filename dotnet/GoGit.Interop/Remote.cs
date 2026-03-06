@@ -10,6 +10,7 @@ public sealed class Remote : IDisposable
     private bool _disposed;
 
     internal Remote(long handle) => _handle = handle;
+    internal long Handle => _handle;
 
     public void Fetch(FetchOptions? o = null)
     {
@@ -58,6 +59,14 @@ public sealed class Remote : IDisposable
             NativeMethods.ThrowIfError(NativeMethods.GitRemoteConfigName(_handle, out var namePtr));
             return NativeMethods.ConsumeGoString(namePtr)!;
         }
+    }
+
+    public RemoteConfig GetConfig()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRemoteConfig(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<RemoteConfig>(json)!;
     }
 
     public void Dispose()

@@ -6,13 +6,14 @@ package main
 */
 import "C"
 import (
-	"encoding/json"
-	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"encoding/json"
 	"time"
+	git "github.com/go-git/go-git/v6"
+	"github.com/ProtonMail/go-crypto/openpgp"
 )
 
 //export GitAddOptionsNew
@@ -313,6 +314,20 @@ func GitCloneOptionsSetBare(handle C.longlong, val C.int) *C.char {
 	return nil
 }
 
+//export GitCloneOptionsSetProxy
+func GitCloneOptionsSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {
+	opts, ok := loadHandle[*git.CloneOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid CloneOptions handle")
+	}
+	opts.ProxyOptions = transport.ProxyOptions{
+		URL:      C.GoString(url),
+		Username: C.GoString(username),
+		Password: C.GoString(password),
+	}
+	return nil
+}
+
 //export GitCloneOptionsFree
 func GitCloneOptionsFree(handle C.longlong) {
 	removeHandle(int64(handle))
@@ -396,6 +411,24 @@ func GitCommitOptionsSetCommitterNameEmail(handle C.longlong, name *C.char, emai
 	return nil
 }
 
+//export GitCommitOptionsSetParents
+func GitCommitOptionsSetParents(handle C.longlong, jsonHashes *C.char) *C.char {
+	opts, ok := loadHandle[*git.CommitOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid CommitOptions handle")
+	}
+	var hexes []string
+	if err := json.Unmarshal([]byte(C.GoString(jsonHashes)), &hexes); err != nil {
+		return toCError(err)
+	}
+	hashes := make([]plumbing.Hash, len(hexes))
+	for i, h := range hexes {
+		hashes[i] = plumbing.NewHash(h)
+	}
+	opts.Parents = hashes
+	return nil
+}
+
 //export GitCommitOptionsFree
 func GitCommitOptionsFree(handle C.longlong) {
 	removeHandle(int64(handle))
@@ -428,6 +461,20 @@ func GitCreateTagOptionsSetTaggerNameEmail(handle C.longlong, name *C.char, emai
 		Email: C.GoString(email),
 		When:  time.Now(),
 	}
+	return nil
+}
+
+//export GitCreateTagOptionsSetSignKey
+func GitCreateTagOptionsSetSignKey(handle C.longlong, keyHandle C.longlong) *C.char {
+	opts, ok := loadHandle[*git.CreateTagOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid CreateTagOptions handle")
+	}
+	entity, ok := loadHandle[*openpgp.Entity](int64(keyHandle))
+	if !ok {
+		return C.CString("invalid signing key handle")
+	}
+	opts.SignKey = entity
 	return nil
 }
 
@@ -544,6 +591,20 @@ func GitFetchOptionsSetPrune(handle C.longlong, val C.int) *C.char {
 	return nil
 }
 
+//export GitFetchOptionsSetProxy
+func GitFetchOptionsSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {
+	opts, ok := loadHandle[*git.FetchOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid FetchOptions handle")
+	}
+	opts.ProxyOptions = transport.ProxyOptions{
+		URL:      C.GoString(url),
+		Username: C.GoString(username),
+		Password: C.GoString(password),
+	}
+	return nil
+}
+
 //export GitFetchOptionsFree
 func GitFetchOptionsFree(handle C.longlong) {
 	removeHandle(int64(handle))
@@ -638,6 +699,20 @@ func GitListOptionsSetTimeout(handle C.longlong, val C.int) *C.char {
 		return C.CString("invalid ListOptions handle")
 	}
 	opts.Timeout = int(val)
+	return nil
+}
+
+//export GitListOptionsSetProxy
+func GitListOptionsSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {
+	opts, ok := loadHandle[*git.ListOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid ListOptions handle")
+	}
+	opts.ProxyOptions = transport.ProxyOptions{
+		URL:      C.GoString(url),
+		Username: C.GoString(username),
+		Password: C.GoString(password),
+	}
 	return nil
 }
 
@@ -895,6 +970,20 @@ func GitPullOptionsSetInsecureSkipTLS(handle C.longlong, val C.int) *C.char {
 	return nil
 }
 
+//export GitPullOptionsSetProxy
+func GitPullOptionsSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {
+	opts, ok := loadHandle[*git.PullOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid PullOptions handle")
+	}
+	opts.ProxyOptions = transport.ProxyOptions{
+		URL:      C.GoString(url),
+		Username: C.GoString(username),
+		Password: C.GoString(password),
+	}
+	return nil
+}
+
 //export GitPullOptionsFree
 func GitPullOptionsFree(handle C.longlong) {
 	removeHandle(int64(handle))
@@ -1047,6 +1136,33 @@ func GitPushOptionsSetQuiet(handle C.longlong, val C.int) *C.char {
 		return C.CString("invalid PushOptions handle")
 	}
 	opts.Quiet = val != 0
+	return nil
+}
+
+//export GitPushOptionsSetProxy
+func GitPushOptionsSetProxy(handle C.longlong, url *C.char, username *C.char, password *C.char) *C.char {
+	opts, ok := loadHandle[*git.PushOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid PushOptions handle")
+	}
+	opts.ProxyOptions = transport.ProxyOptions{
+		URL:      C.GoString(url),
+		Username: C.GoString(username),
+		Password: C.GoString(password),
+	}
+	return nil
+}
+
+//export GitPushOptionsSetForceWithLease
+func GitPushOptionsSetForceWithLease(handle C.longlong, refName *C.char, hash *C.char) *C.char {
+	opts, ok := loadHandle[*git.PushOptions](int64(handle))
+	if !ok {
+		return C.CString("invalid PushOptions handle")
+	}
+	opts.ForceWithLease = &git.ForceWithLease{
+		RefName: plumbing.ReferenceName(C.GoString(refName)),
+		Hash:    plumbing.NewHash(C.GoString(hash)),
+	}
 	return nil
 }
 
@@ -1490,4 +1606,5 @@ var (
 	_ object.Signature
 	_ plumbing.Hash
 	_ transport.AuthMethod
+	_ *openpgp.Entity
 )

@@ -10,6 +10,7 @@ public sealed class Worktree : IDisposable
     private bool _disposed;
 
     internal Worktree(long handle) => _handle = handle;
+    internal long Handle => _handle;
 
     public string Add(string path)
     {
@@ -110,8 +111,8 @@ public sealed class Worktree : IDisposable
     public Submodule GetSubmodule(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        NativeMethods.ThrowIfError(NativeMethods.GitWorktreeSubmodule(_handle, name, out var h));
-        return new Submodule(h);
+        NativeMethods.ThrowIfError(NativeMethods.GitWorktreeSubmodule(_handle, name, out var resultHandle));
+        return new Submodule(resultHandle);
     }
 
     public string[] Submodules()

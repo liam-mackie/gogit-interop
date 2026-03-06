@@ -282,6 +282,11 @@ func (a *analyzer) registerSeedHandleTypes() {
 		{"github.com/go-git/go-git/v6", "Worktree"},
 		{"github.com/go-git/go-git/v6", "Remote"},
 		{"github.com/go-git/go-git/v6", "Submodule"},
+		{"github.com/go-git/go-git/v6/plumbing/object", "Commit"},
+		{"github.com/go-git/go-git/v6/plumbing/object", "Tree"},
+		{"github.com/go-git/go-git/v6/plumbing/object", "Blob"},
+		{"github.com/go-git/go-git/v6/plumbing/object", "Tag"},
+		{"github.com/go-git/go-git/v6/plumbing/object", "File"},
 	}
 
 	for _, seed := range seedTypes {
@@ -393,7 +398,7 @@ func (a *analyzer) processHandleType(qname string, named *types.Named) {
 			}
 			ht.Fields = append(ht.Fields, HandleField{
 				GoName:      field.Name(),
-				GoType:      m.GoType,
+				GoType:      field.Type().String(),
 				CGetterName: ht.CPrefix + "Get" + field.Name(),
 				Mapping:     m,
 			})

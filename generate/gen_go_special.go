@@ -299,7 +299,7 @@ import (
 )
 
 //export GitCommitIterNext
-func GitCommitIterNext(iterHandle C.longlong, hashOut **C.char, msgOut **C.char, authorNameOut **C.char, authorEmailOut **C.char, tsOut *C.longlong, eofOut *C.int) *C.char {
+func GitCommitIterNext(iterHandle C.longlong, handleOut *C.longlong, eofOut *C.int) *C.char {
 	iter, ok := loadHandle[object.CommitIter](int64(iterHandle))
 	if !ok {
 		return C.CString("invalid iterator handle")
@@ -313,11 +313,7 @@ func GitCommitIterNext(iterHandle C.longlong, hashOut **C.char, msgOut **C.char,
 		return toCError(err)
 	}
 	*eofOut = 0
-	*hashOut = C.CString(commit.Hash.String())
-	*msgOut = C.CString(commit.Message)
-	*authorNameOut = C.CString(commit.Author.Name)
-	*authorEmailOut = C.CString(commit.Author.Email)
-	*tsOut = C.longlong(commit.Author.When.Unix())
+	*handleOut = C.longlong(storeHandle(commit))
 	return nil
 }
 
@@ -353,6 +349,118 @@ func GitReferenceIterNext(iterHandle C.longlong, refNameOut **C.char, hashOut **
 //export GitReferenceIterFree
 func GitReferenceIterFree(iterHandle C.longlong) {
 	iter, ok := loadHandle[storer.ReferenceIter](int64(iterHandle))
+	if ok {
+		iter.Close()
+	}
+	removeHandle(int64(iterHandle))
+}
+
+//export GitFileIterNext
+func GitFileIterNext(iterHandle C.longlong, handleOut *C.longlong, eofOut *C.int) *C.char {
+	iter, ok := loadHandle[*object.FileIter](int64(iterHandle))
+	if !ok {
+		return C.CString("invalid iterator handle")
+	}
+	file, err := iter.Next()
+	if err == io.EOF {
+		*eofOut = 1
+		return nil
+	}
+	if err != nil {
+		return toCError(err)
+	}
+	*eofOut = 0
+	*handleOut = C.longlong(storeHandle(file))
+	return nil
+}
+
+//export GitFileIterFree
+func GitFileIterFree(iterHandle C.longlong) {
+	iter, ok := loadHandle[*object.FileIter](int64(iterHandle))
+	if ok {
+		iter.Close()
+	}
+	removeHandle(int64(iterHandle))
+}
+
+//export GitTreeIterNext
+func GitTreeIterNext(iterHandle C.longlong, handleOut *C.longlong, eofOut *C.int) *C.char {
+	iter, ok := loadHandle[*object.TreeIter](int64(iterHandle))
+	if !ok {
+		return C.CString("invalid iterator handle")
+	}
+	tree, err := iter.Next()
+	if err == io.EOF {
+		*eofOut = 1
+		return nil
+	}
+	if err != nil {
+		return toCError(err)
+	}
+	*eofOut = 0
+	*handleOut = C.longlong(storeHandle(tree))
+	return nil
+}
+
+//export GitTreeIterFree
+func GitTreeIterFree(iterHandle C.longlong) {
+	iter, ok := loadHandle[*object.TreeIter](int64(iterHandle))
+	if ok {
+		iter.Close()
+	}
+	removeHandle(int64(iterHandle))
+}
+
+//export GitBlobIterNext
+func GitBlobIterNext(iterHandle C.longlong, handleOut *C.longlong, eofOut *C.int) *C.char {
+	iter, ok := loadHandle[*object.BlobIter](int64(iterHandle))
+	if !ok {
+		return C.CString("invalid iterator handle")
+	}
+	blob, err := iter.Next()
+	if err == io.EOF {
+		*eofOut = 1
+		return nil
+	}
+	if err != nil {
+		return toCError(err)
+	}
+	*eofOut = 0
+	*handleOut = C.longlong(storeHandle(blob))
+	return nil
+}
+
+//export GitBlobIterFree
+func GitBlobIterFree(iterHandle C.longlong) {
+	iter, ok := loadHandle[*object.BlobIter](int64(iterHandle))
+	if ok {
+		iter.Close()
+	}
+	removeHandle(int64(iterHandle))
+}
+
+//export GitTagIterNext
+func GitTagIterNext(iterHandle C.longlong, handleOut *C.longlong, eofOut *C.int) *C.char {
+	iter, ok := loadHandle[*object.TagIter](int64(iterHandle))
+	if !ok {
+		return C.CString("invalid iterator handle")
+	}
+	tag, err := iter.Next()
+	if err == io.EOF {
+		*eofOut = 1
+		return nil
+	}
+	if err != nil {
+		return toCError(err)
+	}
+	*eofOut = 0
+	*handleOut = C.longlong(storeHandle(tag))
+	return nil
+}
+
+//export GitTagIterFree
+func GitTagIterFree(iterHandle C.longlong) {
+	iter, ok := loadHandle[*object.TagIter](int64(iterHandle))
 	if ok {
 		iter.Close()
 	}

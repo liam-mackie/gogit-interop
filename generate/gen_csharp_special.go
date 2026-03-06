@@ -164,19 +164,12 @@ public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
         {
             var err = NativeMethods.GitCommitIterNext(
                 _handle,
-                out var hash, out var msg, out var name, out var email, out var ts, out var eof);
+                out var commitHandle, out var eof);
             NativeMethods.ThrowIfError(err);
 
             if (eof != 0) yield break;
 
-            yield return new Commit
-            {
-                Hash = NativeMethods.ConsumeGoString(hash)!,
-                Message = NativeMethods.ConsumeGoString(msg)!,
-                AuthorName = NativeMethods.ConsumeGoString(name)!,
-                AuthorEmail = NativeMethods.ConsumeGoString(email)!,
-                AuthorTimestamp = DateTimeOffset.FromUnixTimeSeconds(ts),
-            };
+            yield return new Commit(commitHandle);
         }
     }
 
@@ -236,27 +229,178 @@ public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
     }
 }
 `
-	return os.WriteFile(filepath.Join(iterDir, "ReferenceIterator.cs"), []byte(refIter), 0644)
+	if err := os.WriteFile(filepath.Join(iterDir, "ReferenceIterator.cs"), []byte(refIter), 0644); err != nil {
+		return err
+	}
+
+	fileIter := csGenHeader + `#nullable enable
+namespace GoGit.Interop;
+
+public sealed class FileIterator : IEnumerable<File>, IDisposable
+{
+    private long _handle;
+    private bool _disposed;
+
+    internal FileIterator(long handle) => _handle = handle;
+
+    public IEnumerator<File> GetEnumerator()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (true)
+        {
+            var err = NativeMethods.GitFileIterNext(
+                _handle,
+                out var fileHandle, out var eof);
+            NativeMethods.ThrowIfError(err);
+
+            if (eof != 0) yield break;
+
+            yield return new File(fileHandle);
+        }
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        NativeMethods.GitFileIterFree(_handle);
+        _handle = 0;
+    }
+}
+`
+	if err := os.WriteFile(filepath.Join(iterDir, "FileIterator.cs"), []byte(fileIter), 0644); err != nil {
+		return err
+	}
+
+	treeIter := csGenHeader + `#nullable enable
+namespace GoGit.Interop;
+
+public sealed class TreeIterator : IEnumerable<Tree>, IDisposable
+{
+    private long _handle;
+    private bool _disposed;
+
+    internal TreeIterator(long handle) => _handle = handle;
+
+    public IEnumerator<Tree> GetEnumerator()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (true)
+        {
+            var err = NativeMethods.GitTreeIterNext(
+                _handle,
+                out var treeHandle, out var eof);
+            NativeMethods.ThrowIfError(err);
+
+            if (eof != 0) yield break;
+
+            yield return new Tree(treeHandle);
+        }
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        NativeMethods.GitTreeIterFree(_handle);
+        _handle = 0;
+    }
+}
+`
+	if err := os.WriteFile(filepath.Join(iterDir, "TreeIterator.cs"), []byte(treeIter), 0644); err != nil {
+		return err
+	}
+
+	blobIter := csGenHeader + `#nullable enable
+namespace GoGit.Interop;
+
+public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
+{
+    private long _handle;
+    private bool _disposed;
+
+    internal BlobIterator(long handle) => _handle = handle;
+
+    public IEnumerator<Blob> GetEnumerator()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (true)
+        {
+            var err = NativeMethods.GitBlobIterNext(
+                _handle,
+                out var blobHandle, out var eof);
+            NativeMethods.ThrowIfError(err);
+
+            if (eof != 0) yield break;
+
+            yield return new Blob(blobHandle);
+        }
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        NativeMethods.GitBlobIterFree(_handle);
+        _handle = 0;
+    }
+}
+`
+	if err := os.WriteFile(filepath.Join(iterDir, "BlobIterator.cs"), []byte(blobIter), 0644); err != nil {
+		return err
+	}
+
+	tagIter := csGenHeader + `#nullable enable
+namespace GoGit.Interop;
+
+public sealed class TagIterator : IEnumerable<Tag>, IDisposable
+{
+    private long _handle;
+    private bool _disposed;
+
+    internal TagIterator(long handle) => _handle = handle;
+
+    public IEnumerator<Tag> GetEnumerator()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (true)
+        {
+            var err = NativeMethods.GitTagIterNext(
+                _handle,
+                out var tagHandle, out var eof);
+            NativeMethods.ThrowIfError(err);
+
+            if (eof != 0) yield break;
+
+            yield return new Tag(tagHandle);
+        }
+    }
+
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        NativeMethods.GitTagIterFree(_handle);
+        _handle = 0;
+    }
+}
+`
+	return os.WriteFile(filepath.Join(iterDir, "TagIterator.cs"), []byte(tagIter), 0644)
 }
 
 func generateCSharpModels(dir string) error {
 	modelsDir := filepath.Join(dir, "Models")
 
-	commit := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
-
-public sealed class Commit
-{
-    public required string Hash { get; init; }
-    public required string Message { get; init; }
-    public required string AuthorName { get; init; }
-    public required string AuthorEmail { get; init; }
-    public required DateTimeOffset AuthorTimestamp { get; init; }
-}
-`
-	if err := os.WriteFile(filepath.Join(modelsDir, "Commit.cs"), []byte(commit), 0644); err != nil {
-		return err
-	}
+	// Clean up stale model files that are now handle types
+	os.Remove(filepath.Join(modelsDir, "Commit.cs"))
 
 	refInfo := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
@@ -305,7 +449,264 @@ public sealed class GoGitException : Exception
     public GoGitException(string message) : base(message) { }
 }
 `
-	return os.WriteFile(filepath.Join(dir, "GoGitException.cs"), []byte(goGitException), 0644)
+	if err := os.WriteFile(filepath.Join(dir, "GoGitException.cs"), []byte(goGitException), 0644); err != nil {
+		return err
+	}
+
+	branchConfig := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class BranchConfig
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("remote")]
+    public string Remote { get; init; } = "";
+
+    [JsonPropertyName("merge")]
+    public string Merge { get; init; } = "";
+
+    [JsonPropertyName("rebase")]
+    public string Rebase { get; init; } = "";
+
+    [JsonPropertyName("description")]
+    public string? Description { get; init; }
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "BranchConfig.cs"), []byte(branchConfig), 0644); err != nil {
+		return err
+	}
+
+	remoteConfig := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class RemoteConfig
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("urls")]
+    public string[] URLs { get; init; } = [];
+
+    [JsonPropertyName("fetch")]
+    public string[] Fetch { get; init; } = [];
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "RemoteConfig.cs"), []byte(remoteConfig), 0644); err != nil {
+		return err
+	}
+
+	submoduleConfig := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class SubmoduleConfig
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("path")]
+    public string Path { get; init; } = "";
+
+    [JsonPropertyName("url")]
+    public string URL { get; init; } = "";
+
+    [JsonPropertyName("branch")]
+    public string Branch { get; init; } = "";
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "SubmoduleConfig.cs"), []byte(submoduleConfig), 0644); err != nil {
+		return err
+	}
+
+	submoduleStatusInfo := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class SubmoduleStatusInfo
+{
+    [JsonPropertyName("path")]
+    public string Path { get; init; } = "";
+
+    [JsonPropertyName("current")]
+    public string Current { get; init; } = "";
+
+    [JsonPropertyName("expected")]
+    public string Expected { get; init; } = "";
+
+    [JsonPropertyName("branch")]
+    public string Branch { get; init; } = "";
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "SubmoduleStatusInfo.cs"), []byte(submoduleStatusInfo), 0644); err != nil {
+		return err
+	}
+
+	fileStat := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class FileStat
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("addition")]
+    public int Addition { get; init; }
+
+    [JsonPropertyName("deletion")]
+    public int Deletion { get; init; }
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "FileStat.cs"), []byte(fileStat), 0644); err != nil {
+		return err
+	}
+
+	diffChange := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class DiffChange
+{
+    [JsonPropertyName("action")]
+    public string Action { get; init; } = "";
+
+    [JsonPropertyName("fromPath")]
+    public string? FromPath { get; init; }
+
+    [JsonPropertyName("toPath")]
+    public string? ToPath { get; init; }
+
+    [JsonPropertyName("fromHash")]
+    public string? FromHash { get; init; }
+
+    [JsonPropertyName("toHash")]
+    public string? ToHash { get; init; }
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "DiffChange.cs"), []byte(diffChange), 0644); err != nil {
+		return err
+	}
+
+	treeEntryInfo := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class TreeEntryInfo
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("hash")]
+    public string Hash { get; init; } = "";
+
+    [JsonPropertyName("mode")]
+    public uint Mode { get; init; }
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "TreeEntryInfo.cs"), []byte(treeEntryInfo), 0644); err != nil {
+		return err
+	}
+
+	blameResult := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class BlameResult
+{
+    [JsonPropertyName("path")]
+    public string Path { get; init; } = "";
+
+    [JsonPropertyName("rev")]
+    public string Rev { get; init; } = "";
+
+    [JsonPropertyName("lines")]
+    public BlameLine[] Lines { get; init; } = [];
+}
+
+public sealed class BlameLine
+{
+    [JsonPropertyName("author")]
+    public string Author { get; init; } = "";
+
+    [JsonPropertyName("authorEmail")]
+    public string AuthorEmail { get; init; } = "";
+
+    [JsonPropertyName("hash")]
+    public string Hash { get; init; } = "";
+
+    [JsonPropertyName("date")]
+    public long Date { get; init; }
+
+    [JsonPropertyName("text")]
+    public string Text { get; init; } = "";
+
+    public DateTimeOffset DateTimeOffset => DateTimeOffset.FromUnixTimeSeconds(Date);
+}
+`
+	if err := os.WriteFile(filepath.Join(modelsDir, "BlameResult.cs"), []byte(blameResult), 0644); err != nil {
+		return err
+	}
+
+	gitConfig := csGenHeader + `#nullable enable
+using System.Text.Json.Serialization;
+
+namespace GoGit.Interop;
+
+public sealed class GitConfig
+{
+    [JsonPropertyName("core")]
+    public GitConfigCore Core { get; init; } = new();
+
+    [JsonPropertyName("user")]
+    public GitConfigIdentity User { get; init; } = new();
+
+    [JsonPropertyName("author")]
+    public GitConfigIdentity Author { get; init; } = new();
+
+    [JsonPropertyName("committer")]
+    public GitConfigIdentity Committer { get; init; } = new();
+
+    [JsonPropertyName("init")]
+    public GitConfigInit Init { get; init; } = new();
+}
+
+public sealed class GitConfigCore
+{
+    [JsonPropertyName("isBare")]
+    public bool IsBare { get; init; }
+
+    [JsonPropertyName("worktree")]
+    public string Worktree { get; init; } = "";
+}
+
+public sealed class GitConfigIdentity
+{
+    [JsonPropertyName("name")]
+    public string Name { get; init; } = "";
+
+    [JsonPropertyName("email")]
+    public string Email { get; init; } = "";
+}
+
+public sealed class GitConfigInit
+{
+    [JsonPropertyName("defaultBranch")]
+    public string DefaultBranch { get; init; } = "";
+}
+`
+	return os.WriteFile(filepath.Join(modelsDir, "GitConfig.cs"), []byte(gitConfig), 0644)
 }
 
 func nativeMethodsAuthSection(b *strings.Builder) {
@@ -384,11 +785,7 @@ func nativeMethodsIteratorSection(b *strings.Builder) {
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr GitCommitIterNext(
         long iterHandle,
-        out IntPtr hashOut,
-        out IntPtr msgOut,
-        out IntPtr authorNameOut,
-        out IntPtr authorEmailOut,
-        out long tsOut,
+        out long handleOut,
         out int eofOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
@@ -404,6 +801,42 @@ func nativeMethodsIteratorSection(b *strings.Builder) {
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitReferenceIterFree(long iterHandle);
 
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitFileIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitFileIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTreeIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTreeIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitBlobIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitBlobIterFree(long iterHandle);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitTagIterNext(
+        long iterHandle,
+        out long handleOut,
+        out int eofOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern void GitTagIterFree(long iterHandle);
+
 `)
 }
 
@@ -418,7 +851,35 @@ func nativeMethodsHandleSection(b *strings.Builder, pkg *Package) {
 			}
 		}
 		writeExtraNativeMethods(b, &ht)
+		writeFieldGetterNativeMethods(b, &ht)
 		writeFreeDllImport(b, &ht)
+	}
+}
+
+func writeFieldGetterNativeMethods(b *strings.Builder, ht *HandleType) {
+	for _, f := range ht.Fields {
+		handleParam := strings.ToLower(ht.GoName[:1]) + "Handle"
+		var outType string
+		switch f.Mapping.Kind {
+		case MappingString, MappingHash, MappingReferenceName:
+			outType = "out IntPtr"
+		case MappingPrimitive:
+			switch f.Mapping.CSharpType {
+			case "long":
+				outType = "out long"
+			case "uint":
+				outType = "out uint"
+			default:
+				outType = "out int"
+			}
+		case MappingBool:
+			outType = "out int"
+		default:
+			continue
+		}
+
+		b.WriteString("    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]\n")
+		fmt.Fprintf(b, "    public static extern IntPtr %s(long %s, %s valOut);\n\n", f.CGetterName, handleParam, outType)
 	}
 }
 
@@ -444,6 +905,8 @@ func writeGenericNativeMethod(b *strings.Builder, ht *HandleType, m Method) {
 			params = append(params, "out IntPtr strOut")
 		case MappingBool:
 			params = append(params, "out int boolOut")
+		case MappingEnum:
+			params = append(params, "out int valOut")
 		case MappingPrimitive:
 			if r.CType == "C.longlong" {
 				params = append(params, "out long valOut")

@@ -6,14 +6,17 @@ package main
 */
 import "C"
 import (
-	"context"
+	"github.com/go-git/go-billy/v6/memfs"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing/storer"
+	"context"
 	"github.com/go-git/go-git/v6/plumbing/transport"
+	billy "github.com/go-git/go-billy/v6"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/storage/memory"
 )
 
 //export GitPlainClone
@@ -66,6 +69,66 @@ func GitPlainOpenWithOptions(path *C.char, oHandle C.longlong, handleOut *C.long
 	return nil
 }
 
+//export GitRepositoryBlobObject
+func GitRepositoryBlobObject(rHandle C.longlong, h *C.char, handleOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.BlobObject(plumbing.NewHash(C.GoString(h)))
+	if err != nil {
+		return toCError(err)
+	}
+	*handleOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryBlobObjects
+func GitRepositoryBlobObjects(rHandle C.longlong, iterOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.BlobObjects()
+	if err != nil {
+		return toCError(err)
+	}
+	*iterOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryBranch
+func GitRepositoryBranch(repoHandle C.longlong, name *C.char, jsonOut **C.char) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(repoHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	branch, err := recv.Branch(C.GoString(name))
+	if err != nil {
+		return toCError(err)
+	}
+	type branchJSON struct {
+		Name        string `json:"name"`
+		Remote      string `json:"remote"`
+		Merge       string `json:"merge"`
+		Rebase      string `json:"rebase"`
+		Description string `json:"description,omitempty"`
+	}
+	out := branchJSON{
+		Name:   branch.Name,
+		Remote: branch.Remote,
+		Merge:  string(branch.Merge),
+		Rebase: branch.Rebase,
+		Description: branch.Description,
+	}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
+	return nil
+}
+
 //export GitRepositoryBranches
 func GitRepositoryBranches(rHandle C.longlong, iterOut *C.longlong) *C.char {
 	recv, ok := loadHandle[*git.Repository](int64(rHandle))
@@ -81,21 +144,16 @@ func GitRepositoryBranches(rHandle C.longlong, iterOut *C.longlong) *C.char {
 }
 
 //export GitRepositoryCommitObject
-func GitRepositoryCommitObject(repoHandle C.longlong, hash *C.char, commitHashOut **C.char, msgOut **C.char, authorNameOut **C.char, authorEmailOut **C.char, tsOut *C.longlong) *C.char {
-	recv, ok := loadHandle[*git.Repository](int64(repoHandle))
+func GitRepositoryCommitObject(rHandle C.longlong, h *C.char, handleOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	h := plumbing.NewHash(C.GoString(hash))
-	commit, err := recv.CommitObject(h)
+	r0, err := recv.CommitObject(plumbing.NewHash(C.GoString(h)))
 	if err != nil {
 		return toCError(err)
 	}
-	*commitHashOut = C.CString(commit.Hash.String())
-	*msgOut = C.CString(commit.Message)
-	*authorNameOut = C.CString(commit.Author.Name)
-	*authorEmailOut = C.CString(commit.Author.Email)
-	*tsOut = C.longlong(commit.Author.When.Unix())
+	*handleOut = C.longlong(storeHandle(r0))
 	return nil
 }
 
@@ -110,6 +168,49 @@ func GitRepositoryCommitObjects(rHandle C.longlong, iterOut *C.longlong) *C.char
 		return toCError(err)
 	}
 	*iterOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryConfig
+func GitRepositoryConfig(repoHandle C.longlong, jsonOut **C.char) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(repoHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	cfg, err := recv.Config()
+	if err != nil {
+		return toCError(err)
+	}
+	type coreJSON struct {
+		IsBare   bool   `json:"isBare"`
+		Worktree string `json:"worktree,omitempty"`
+	}
+	type identityJSON struct {
+		Name  string `json:"name,omitempty"`
+		Email string `json:"email,omitempty"`
+	}
+	type initJSON struct {
+		DefaultBranch string `json:"defaultBranch,omitempty"`
+	}
+	type configJSON struct {
+		Core      coreJSON     `json:"core"`
+		User      identityJSON `json:"user"`
+		Author    identityJSON `json:"author"`
+		Committer identityJSON `json:"committer"`
+		Init      initJSON     `json:"init"`
+	}
+	out := configJSON{
+		Core: coreJSON{IsBare: cfg.Core.IsBare, Worktree: cfg.Core.Worktree},
+		User: identityJSON{Name: cfg.User.Name, Email: cfg.User.Email},
+		Author: identityJSON{Name: cfg.Author.Name, Email: cfg.Author.Email},
+		Committer: identityJSON{Name: cfg.Committer.Name, Email: cfg.Committer.Email},
+		Init: initJSON{DefaultBranch: string(cfg.Init.DefaultBranch)},
+	}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
 	return nil
 }
 
@@ -142,19 +243,29 @@ func GitRepositoryCreateRemote(repoHandle C.longlong, name *C.char, url *C.char,
 	return nil
 }
 
+//export GitRepositoryCreateRemoteAnonymous
+func GitRepositoryCreateRemoteAnonymous(repoHandle C.longlong, url *C.char, handleOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(repoHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	remote, err := recv.CreateRemoteAnonymous(&config.RemoteConfig{
+		URLs: []string{C.GoString(url)},
+	})
+	if err != nil {
+		return toCError(err)
+	}
+	*handleOut = C.longlong(storeHandle(remote))
+	return nil
+}
+
 //export GitRepositoryCreateTag
 func GitRepositoryCreateTag(rHandle C.longlong, name *C.char, hash *C.char, optsHandle C.longlong, refNameOut **C.char, hashOut **C.char) *C.char {
 	recv, ok := loadHandle[*git.Repository](int64(rHandle))
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	r0, err := recv.CreateTag(C.GoString(name), plumbing.NewHash(C.GoString(hash)), func() *git.CreateTagOptions {
-		if int64(optsHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.CreateTagOptions](int64(optsHandle))
-		return v
-	}())
+	r0, err := recv.CreateTag(C.GoString(name), plumbing.NewHash(C.GoString(hash)), func() *git.CreateTagOptions { if int64(optsHandle) == 0 { return nil }; v, _ := loadHandle[*git.CreateTagOptions](int64(optsHandle)); return v }())
 	if err != nil {
 		return toCError(err)
 	}
@@ -205,13 +316,7 @@ func GitRepositoryFetch(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	return toCError(recv.Fetch(func() *git.FetchOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.FetchOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Fetch(func() *git.FetchOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.FetchOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRepositoryFetchContext
@@ -220,13 +325,7 @@ func GitRepositoryFetchContext(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	return toCError(recv.FetchContext(context.Background(), func() *git.FetchOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.FetchOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.FetchContext(context.Background(), func() *git.FetchOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.FetchOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRepositoryHead
@@ -250,13 +349,7 @@ func GitRepositoryLog(rHandle C.longlong, oHandle C.longlong, iterOut *C.longlon
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	r0, err := recv.Log(func() *git.LogOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.LogOptions](int64(oHandle))
-		return v
-	}())
+	r0, err := recv.Log(func() *git.LogOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.LogOptions](int64(oHandle)); return v }())
 	if err != nil {
 		return toCError(err)
 	}
@@ -303,13 +396,7 @@ func GitRepositoryPush(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	return toCError(recv.Push(func() *git.PushOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PushOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.Push(func() *git.PushOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PushOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRepositoryPushContext
@@ -318,13 +405,7 @@ func GitRepositoryPushContext(rHandle C.longlong, oHandle C.longlong) *C.char {
 	if !ok {
 		return C.CString("invalid repository handle")
 	}
-	return toCError(recv.PushContext(context.Background(), func() *git.PushOptions {
-		if int64(oHandle) == 0 {
-			return nil
-		}
-		v, _ := loadHandle[*git.PushOptions](int64(oHandle))
-		return v
-	}()))
+	return toCError(recv.PushContext(context.Background(), func() *git.PushOptions { if int64(oHandle) == 0 { return nil }; v, _ := loadHandle[*git.PushOptions](int64(oHandle)); return v }()))
 }
 
 //export GitRepositoryReference
@@ -399,6 +480,34 @@ func GitRepositoryTag(rHandle C.longlong, name *C.char, refNameOut **C.char, has
 	return nil
 }
 
+//export GitRepositoryTagObject
+func GitRepositoryTagObject(rHandle C.longlong, h *C.char, handleOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.TagObject(plumbing.NewHash(C.GoString(h)))
+	if err != nil {
+		return toCError(err)
+	}
+	*handleOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryTagObjects
+func GitRepositoryTagObjects(rHandle C.longlong, iterOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.TagObjects()
+	if err != nil {
+		return toCError(err)
+	}
+	*iterOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
 //export GitRepositoryTags
 func GitRepositoryTags(rHandle C.longlong, iterOut *C.longlong) *C.char {
 	recv, ok := loadHandle[*git.Repository](int64(rHandle))
@@ -406,6 +515,34 @@ func GitRepositoryTags(rHandle C.longlong, iterOut *C.longlong) *C.char {
 		return C.CString("invalid repository handle")
 	}
 	r0, err := recv.Tags()
+	if err != nil {
+		return toCError(err)
+	}
+	*iterOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryTreeObject
+func GitRepositoryTreeObject(rHandle C.longlong, h *C.char, handleOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.TreeObject(plumbing.NewHash(C.GoString(h)))
+	if err != nil {
+		return toCError(err)
+	}
+	*handleOut = C.longlong(storeHandle(r0))
+	return nil
+}
+
+//export GitRepositoryTreeObjects
+func GitRepositoryTreeObjects(rHandle C.longlong, iterOut *C.longlong) *C.char {
+	recv, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	r0, err := recv.TreeObjects()
 	if err != nil {
 		return toCError(err)
 	}
@@ -449,6 +586,65 @@ func GitRepositoryRemotes(repoHandle C.longlong, jsonOut **C.char) *C.char {
 	return nil
 }
 
+//export GitCloneInMemory
+func GitCloneInMemory(optsHandle C.longlong, handleOut *C.longlong) *C.char {
+	opts, ok := loadHandle[*git.CloneOptions](int64(optsHandle))
+	if !ok {
+		return C.CString("invalid CloneOptions handle")
+	}
+	storer := memory.NewStorage()
+	var wt billy.Filesystem
+	if !opts.Bare {
+		wt = memfs.New()
+	}
+	repo, err := git.Clone(storer, wt, opts)
+	if err != nil {
+		return toCError(err)
+	}
+	*handleOut = C.longlong(storeHandle(repo))
+	return nil
+}
+
+//export GitBlame
+func GitBlame(commitHandle C.longlong, path *C.char, jsonOut **C.char) *C.char {
+	commit, ok := loadHandle[*object.Commit](int64(commitHandle))
+	if !ok {
+		return C.CString("invalid commit handle")
+	}
+	result, err := git.Blame(commit, C.GoString(path))
+	if err != nil {
+		return toCError(err)
+	}
+	type lineJSON struct {
+		Author      string `json:"author"`
+		AuthorEmail string `json:"authorEmail"`
+		Hash        string `json:"hash"`
+		Date        int64  `json:"date"`
+		Text        string `json:"text"`
+	}
+	type blameJSON struct {
+		Path  string     `json:"path"`
+		Rev   string     `json:"rev"`
+		Lines []lineJSON `json:"lines"`
+	}
+	out := blameJSON{Path: result.Path, Rev: result.Rev.String()}
+	for _, l := range result.Lines {
+		out.Lines = append(out.Lines, lineJSON{
+			Author:      l.AuthorName,
+			AuthorEmail: l.Author,
+			Hash:        l.Hash.String(),
+			Date:        l.Date.Unix(),
+			Text:        l.Text,
+		})
+	}
+	data, err := json.Marshal(out)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
+	return nil
+}
+
 //export GitRepositoryFree
 func GitRepositoryFree(rHandle C.longlong) {
 	removeHandle(int64(rHandle))
@@ -456,10 +652,13 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ storer.ReferenceIter
-	_ object.Signature
+	_ = memfs.New
 	_ plumbing.Hash
+	_ storer.ReferenceIter
 	_ = context.Background
-	_ config.RemoteConfig
 	_ transport.AuthMethod
+	_ billy.Filesystem
+	_ object.Signature
+	_ config.RemoteConfig
+	_ = memory.NewStorage
 )

@@ -30,6 +30,7 @@ func generateCSharpWrapper(pkg *Package, ht *HandleType, dir string) error {
 	b.WriteString("    private long _handle;\n")
 	b.WriteString("    private bool _disposed;\n\n")
 	fmt.Fprintf(&b, "    internal %s(long handle) => _handle = handle;\n", ht.GoName)
+	b.WriteString("    internal long Handle => _handle;\n")
 
 	if ht.GoName == "Repository" {
 		generateRepoFactoryMethods(&b, pkg)
@@ -45,6 +46,7 @@ func generateCSharpWrapper(pkg *Package, ht *HandleType, dir string) error {
 	}
 
 	generateExtraWrapperMethods(&b, ht)
+	generateFieldProperties(&b, ht)
 
 	b.WriteString("\n    public void Dispose()\n    {\n")
 	b.WriteString("        if (_disposed) return;\n")
@@ -58,8 +60,15 @@ func generateCSharpWrapper(pkg *Package, ht *HandleType, dir string) error {
 
 func wrapperNeedsJson(ht *HandleType) bool {
 	switch ht.GoName {
-	case "Repository", "Worktree", "Remote":
+	case "Repository", "Worktree", "Remote", "Commit", "Tree", "Submodule":
 		return true
+	}
+	for _, m := range ht.Methods {
+		for _, r := range m.Returns {
+			if r.Mapping.Kind == MappingStringSlice {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -87,6 +96,12 @@ func generateRepoFactoryMethods(b *strings.Builder, pkg *Package) {
     public static Repository Clone(string path, CloneOptions options)
     {
         NativeMethods.ThrowIfError(NativeMethods.GitPlainClone(path, options.Handle, out var handle));
+        return new Repository(handle);
+    }
+
+    public static Repository CloneInMemory(CloneOptions options)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitCloneInMemory(options.Handle, out var handle));
         return new Repository(handle);
     }
 `)
@@ -130,8 +145,8 @@ func generateWrapperBody(b *strings.Builder, ht *HandleType, m Method) {
 			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var outRefName, out var outHash));\n", m.CName, nativeArgs)
 			b.WriteString("        return (NativeMethods.ConsumeGoString(outRefName)!, NativeMethods.ConsumeGoString(outHash)!);\n")
 		case MappingHandle:
-			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var h));\n", m.CName, nativeArgs)
-			fmt.Fprintf(b, "        return new %s(h);\n", r.Mapping.HandleType)
+			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var resultHandle));\n", m.CName, nativeArgs)
+			fmt.Fprintf(b, "        return new %s(resultHandle);\n", r.Mapping.HandleType)
 		case MappingIterator:
 			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var iter));\n", m.CName, nativeArgs)
 			fmt.Fprintf(b, "        return new %s(iter);\n", csIteratorClassName(r.Mapping.HandleType))
@@ -144,7 +159,7 @@ func generateWrapperBody(b *strings.Builder, ht *HandleType, m Method) {
 		case MappingBool:
 			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var val));\n", m.CName, nativeArgs)
 			b.WriteString("        return val != 0;\n")
-		case MappingPrimitive:
+		case MappingPrimitive, MappingEnum:
 			fmt.Fprintf(b, "        NativeMethods.ThrowIfError(NativeMethods.%s(_handle%s, out var val));\n", m.CName, nativeArgs)
 			b.WriteString("        return val;\n")
 		case MappingTime:
@@ -177,7 +192,7 @@ func csWrapperReturnType(m Method) string {
 			return "string"
 		case MappingBool:
 			return "bool"
-		case MappingPrimitive:
+		case MappingPrimitive, MappingEnum:
 			return r.Mapping.CSharpType
 		case MappingTime:
 			return "DateTimeOffset"
@@ -194,10 +209,28 @@ func csPublicMethodName(ht *HandleType, m Method) string {
 		return "GetWorktree"
 	case "Repository.Remote":
 		return "GetRemote"
+	case "Repository.CommitObject":
+		return "GetCommitObject"
+	case "Repository.TreeObject":
+		return "GetTreeObject"
+	case "Repository.BlobObject":
+		return "GetBlobObject"
+	case "Repository.TagObject":
+		return "GetTagObject"
 	case "Worktree.Submodule":
 		return "GetSubmodule"
 	case "Submodule.Repository":
 		return "GetRepository"
+	case "Tree.Tree":
+		return "GetSubtree"
+	case "Commit.Tree":
+		return "GetTree"
+	case "Tag.Commit":
+		return "GetCommit"
+	case "Tag.Tree":
+		return "GetTree"
+	case "Tag.Blob":
+		return "GetBlob"
 	}
 	return m.GoName
 }
@@ -251,8 +284,56 @@ func csIteratorClassName(handleType string) string {
 		return "CommitIterator"
 	case "ReferenceIter":
 		return "ReferenceIterator"
+	case "FileIter":
+		return "FileIterator"
+	case "TreeIter":
+		return "TreeIterator"
+	case "BlobIter":
+		return "BlobIterator"
+	case "TagIter":
+		return "TagIterator"
 	default:
 		return handleType + "Iterator"
+	}
+}
+
+func generateFieldProperties(b *strings.Builder, ht *HandleType) {
+	for _, f := range ht.Fields {
+		csType := csFieldPropertyType(f)
+		if csType == "" {
+			continue
+		}
+
+		fmt.Fprintf(b, "\n    public %s %s\n    {\n", csType, f.GoName)
+		b.WriteString("        get\n        {\n")
+		b.WriteString("            ObjectDisposedException.ThrowIf(_disposed, this);\n")
+
+		switch f.Mapping.Kind {
+		case MappingString, MappingHash, MappingReferenceName:
+			fmt.Fprintf(b, "            NativeMethods.ThrowIfError(NativeMethods.%s(_handle, out var ptr));\n", f.CGetterName)
+			b.WriteString("            return NativeMethods.ConsumeGoString(ptr)!;\n")
+		case MappingPrimitive:
+			fmt.Fprintf(b, "            NativeMethods.ThrowIfError(NativeMethods.%s(_handle, out var val));\n", f.CGetterName)
+			b.WriteString("            return val;\n")
+		case MappingBool:
+			fmt.Fprintf(b, "            NativeMethods.ThrowIfError(NativeMethods.%s(_handle, out var val));\n", f.CGetterName)
+			b.WriteString("            return val != 0;\n")
+		}
+
+		b.WriteString("        }\n    }\n")
+	}
+}
+
+func csFieldPropertyType(f HandleField) string {
+	switch f.Mapping.Kind {
+	case MappingString, MappingHash, MappingReferenceName:
+		return "string"
+	case MappingPrimitive:
+		return f.Mapping.CSharpType
+	case MappingBool:
+		return "bool"
+	default:
+		return ""
 	}
 }
 
@@ -382,6 +463,106 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
         return JsonSerializer.Deserialize<ReferenceInfo[]>(json) ?? [];
     }
 `)
+	case "Blob.Reader":
+		b.WriteString(`    public string Contents()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var dataPtr));
+        return NativeMethods.ConsumeGoString(dataPtr)!;
+    }
+`)
+	case "Repository.Branch":
+		b.WriteString(`    public BranchConfig GetBranch(string name)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, name, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<BranchConfig>(json)!;
+    }
+`)
+	case "Repository.Config":
+		b.WriteString(`    public GitConfig GetConfig()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<GitConfig>(json)!;
+    }
+`)
+	case "Repository.CreateRemoteAnonymous":
+		b.WriteString(`    public Remote CreateRemoteAnonymous(string url)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, url, out var handle));
+        return new Remote(handle);
+    }
+`)
+	case "Commit.Stats":
+		b.WriteString(`    public FileStat[] Stats()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<FileStat[]>(json) ?? [];
+    }
+`)
+	case "Commit.Patch":
+		b.WriteString(`    public string GetPatch(Commit? to = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var patchPtr));
+        return NativeMethods.ConsumeGoString(patchPtr)!;
+    }
+`)
+	case "Commit.MergeBase":
+		b.WriteString(`    public string[] MergeBase(Commit other)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, other.Handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<string[]>(json) ?? [];
+    }
+`)
+	case "Commit.Verify":
+		b.WriteString(`    public void Verify(string armoredKeyRing)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, armoredKeyRing));
+    }
+`)
+	case "Tree.Diff":
+		b.WriteString(`    public DiffChange[] Diff(Tree? to = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<DiffChange[]>(json) ?? [];
+    }
+`)
+	case "Tree.Patch":
+		b.WriteString(`    public string GetPatch(Tree? to = null)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, to?.Handle ?? 0, out var patchPtr));
+        return NativeMethods.ConsumeGoString(patchPtr)!;
+    }
+`)
+	case "Tree.FindEntry":
+		b.WriteString(`    public TreeEntryInfo FindEntry(string path)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, path, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<TreeEntryInfo>(json)!;
+    }
+`)
+	case "Tag.Verify":
+		b.WriteString(`    public void Verify(string armoredKeyRing)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, armoredKeyRing));
+    }
+`)
 	}
 }
 
@@ -396,6 +577,13 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         var json = NativeMethods.ConsumeGoString(jsonPtr)!;
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
+
+    public static BlameResult Blame(Commit commit, string path)
+    {
+        NativeMethods.ThrowIfError(NativeMethods.GitBlame(commit.Handle, path, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<BlameResult>(json)!;
+    }
 `)
 	case "Remote":
 		b.WriteString(`
@@ -407,6 +595,14 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
             NativeMethods.ThrowIfError(NativeMethods.GitRemoteConfigName(_handle, out var namePtr));
             return NativeMethods.ConsumeGoString(namePtr)!;
         }
+    }
+
+    public RemoteConfig GetConfig()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRemoteConfig(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<RemoteConfig>(json)!;
     }
 `)
 	case "Submodule":
@@ -420,6 +616,56 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
             return NativeMethods.ConsumeGoString(namePtr)!;
         }
     }
+
+    public SubmoduleConfig GetConfig()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitSubmoduleConfig(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<SubmoduleConfig>(json)!;
+    }
+
+    public SubmoduleStatusInfo GetStatus()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitSubmoduleStatus(_handle, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<SubmoduleStatusInfo>(json)!;
+    }
 `)
+	case "Commit":
+		for _, field := range []string{"Author", "Committer"} {
+			fmt.Fprintf(b, `
+    public string %sName
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            NativeMethods.ThrowIfError(NativeMethods.GitCommit%sName(_handle, out var ptr));
+            return NativeMethods.ConsumeGoString(ptr)!;
+        }
+    }
+
+    public string %sEmail
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            NativeMethods.ThrowIfError(NativeMethods.GitCommit%sEmail(_handle, out var ptr));
+            return NativeMethods.ConsumeGoString(ptr)!;
+        }
+    }
+
+    public DateTimeOffset %sWhen
+    {
+        get
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            NativeMethods.ThrowIfError(NativeMethods.GitCommit%sWhen(_handle, out var ts));
+            return DateTimeOffset.FromUnixTimeSeconds(ts);
+        }
+    }
+`, field, field, field, field, field, field)
+		}
 	}
 }
