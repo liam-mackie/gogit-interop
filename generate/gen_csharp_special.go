@@ -11,7 +11,7 @@ func generateCSharpAuth(dir string) error {
 	content := csGenHeader + `#nullable enable
 using System.Runtime.InteropServices;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>
 /// Authentication credentials for remote git operations.
@@ -131,7 +131,7 @@ public sealed class Auth : IDisposable
 
 func generateCSharpSigner(dir string) error {
 	content := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>
 /// A signing key used to GPG-sign git commits and tags.
@@ -169,7 +169,7 @@ func generateCSharpIterators(dir string) error {
 	iterDir := filepath.Join(dir, "Iterators")
 
 	commitIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="Commit"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
@@ -211,7 +211,7 @@ public sealed class CommitIterator : IEnumerable<Commit>, IDisposable
 	}
 
 	refIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="ReferenceInfo"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
@@ -257,7 +257,7 @@ public sealed class ReferenceIterator : IEnumerable<ReferenceInfo>, IDisposable
 	}
 
 	fileIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="File"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class FileIterator : IEnumerable<File>, IDisposable
@@ -299,7 +299,7 @@ public sealed class FileIterator : IEnumerable<File>, IDisposable
 	}
 
 	treeIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="Tree"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class TreeIterator : IEnumerable<Tree>, IDisposable
@@ -341,7 +341,7 @@ public sealed class TreeIterator : IEnumerable<Tree>, IDisposable
 	}
 
 	blobIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="Blob"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
@@ -383,7 +383,7 @@ public sealed class BlobIterator : IEnumerable<Blob>, IDisposable
 	}
 
 	tagIter := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Lazily iterates over <see cref="Tag"/> objects returned by go-git. Must be disposed after use.</summary>
 public sealed class TagIterator : IEnumerable<Tag>, IDisposable
@@ -432,7 +432,7 @@ func generateCSharpModels(dir string) error {
 	refInfo := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>A git reference (branch, tag, or other ref) as advertised by a remote or stored in a repository.</summary>
 public sealed class ReferenceInfo
@@ -453,7 +453,7 @@ public sealed class ReferenceInfo
 	fileStatus := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>The staging and working-tree status of a single file, as returned by <see cref="Worktree.Status"/>.</summary>
 public sealed class FileStatus
@@ -476,7 +476,7 @@ public sealed class FileStatus
 	}
 
 	goGitException := csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Exception thrown when a go-git operation fails. The message is the error string returned by the Go library.</summary>
 public sealed class GoGitException : Exception
@@ -491,7 +491,7 @@ public sealed class GoGitException : Exception
 	branchConfig := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Configuration for a local branch, as returned by <see cref="Repository.GetBranch"/>.</summary>
 public sealed class BranchConfig
@@ -519,7 +519,7 @@ public sealed class BranchConfig
 	remoteConfig := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Configuration for a git remote (name, URLs, fetch refspecs), as returned by <see cref="Remote.GetConfig"/>.</summary>
 public sealed class RemoteConfig
@@ -541,7 +541,7 @@ public sealed class RemoteConfig
 	submoduleConfig := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Configuration for a git submodule (name, path, URL, branch), as returned by <see cref="Submodule.GetConfig"/>.</summary>
 public sealed class SubmoduleConfig
@@ -566,7 +566,7 @@ public sealed class SubmoduleConfig
 	submoduleStatusInfo := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Sync status of a submodule, as returned by <see cref="Submodule.GetStatus"/>.</summary>
 public sealed class SubmoduleStatusInfo
@@ -591,7 +591,7 @@ public sealed class SubmoduleStatusInfo
 	fileStat := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Per-file line addition/deletion statistics for a commit, as returned by <see cref="Commit.Stats"/>.</summary>
 public sealed class FileStat
@@ -613,7 +613,7 @@ public sealed class FileStat
 	diffChange := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>A single file change within a tree diff, as returned by <see cref="Tree.Diff"/>.</summary>
 public sealed class DiffChange
@@ -639,7 +639,7 @@ public sealed class DiffChange
 	}
 
 	treeEntryMode := csGenHeader + `
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>
 /// The git file mode (type and permission bits) for a tree entry.
@@ -676,7 +676,7 @@ public enum TreeEntryMode : uint
 	treeEntryInfo := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Metadata for a single tree entry (file or subtree), as returned by <see cref="Tree.FindEntry"/>.</summary>
 public sealed class TreeEntryInfo
@@ -701,7 +701,7 @@ public sealed class TreeEntryInfo
 	blameResult := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Line-by-line blame information for a file, as returned by <see cref="Repository.Blame"/>.</summary>
 public sealed class BlameResult
@@ -750,7 +750,7 @@ public sealed class BlameLine
 	gitConfig := csGenHeader + `#nullable enable
 using System.Text.Json.Serialization;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>A subset of the repository's git configuration, as returned by <see cref="Repository.GetConfig"/>.</summary>
 public sealed class GitConfig

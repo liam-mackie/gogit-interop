@@ -11,7 +11,7 @@ import (
 var optionsTemplate = template.Must(template.New("options").Funcs(template.FuncMap{
 	"trimSet": func(s string) string { return strings.TrimPrefix(s, "Set") },
 }).Parse(csGenHeader + `#nullable enable
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 /// <summary>Options for a go-git <c>{{.ClassName}}</c> operation. Use the fluent <c>Set*</c> methods to configure, then pass to the corresponding repository method.</summary>
 public sealed class {{.ClassName}} : IDisposable

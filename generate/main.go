@@ -10,7 +10,7 @@ func main() {
 	pkg := analyzePackages()
 
 	goOutputDir := filepath.Join("..", "shared")
-	csOutputDir := filepath.Join("..", "dotnet", "GoGit.Interop")
+	csOutputDir := filepath.Join("..", "dotnet", "GoGitDotNet")
 	if len(os.Args) > 1 {
 		goOutputDir = os.Args[1]
 	}

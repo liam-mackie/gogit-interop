@@ -25,7 +25,7 @@ func generateCSharpWrapper(pkg *Package, ht *HandleType, dir string) error {
 	if needsJson {
 		b.WriteString("using System.Text.Json;\n")
 	}
-	b.WriteString("\nnamespace GoGit.Interop;\n\n")
+	b.WriteString("\nnamespace GoGitDotNet;\n\n")
 	if doc := csTypeDoc(ht.GoName); doc != "" {
 		fmt.Fprintf(&b, "/// <summary>%s</summary>\n", doc)
 	}
@@ -740,6 +740,66 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         NativeMethods.ThrowIfError(NativeMethods.GitBlame(commit.Handle, path, out var jsonPtr));
         var json = NativeMethods.ConsumeGoString(jsonPtr)!;
         return JsonSerializer.Deserialize<BlameResult>(json)!;
+    }
+
+    /// <summary>Writes <paramref name="content"/> as a blob object to the object store. Returns its SHA-1 hash.</summary>
+    public string StoreBlob(byte[] content)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var b64 = Convert.ToBase64String(content);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryStoreBlob(_handle, b64, out var hashPtr));
+        return NativeMethods.ConsumeGoString(hashPtr)!;
+    }
+
+    /// <summary>Writes UTF-8 encoded <paramref name="text"/> as a blob object to the object store. Returns its SHA-1 hash.</summary>
+    public string StoreBlob(string text) => StoreBlob(System.Text.Encoding.UTF8.GetBytes(text));
+
+    /// <summary>Returns the direct entries of the tree identified by <paramref name="treeHash"/>.</summary>
+    public TreeEntryInfo[] GetTreeEntries(string treeHash)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryGetTreeEntries(_handle, treeHash, out var jsonPtr));
+        var json = NativeMethods.ConsumeGoString(jsonPtr)!;
+        return JsonSerializer.Deserialize<TreeEntryInfo[]>(json) ?? [];
+    }
+
+    /// <summary>Writes a tree object built from <paramref name="entries"/> to the object store. Returns its SHA-1 hash.</summary>
+    public string StoreTree(IEnumerable<TreeEntryInfo> entries)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var json = JsonSerializer.Serialize(entries);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryStoreTree(_handle, json, out var hashPtr));
+        return NativeMethods.ConsumeGoString(hashPtr)!;
+    }
+
+    /// <summary>
+    /// Writes a commit object directly to the object store without touching the worktree.
+    /// Returns the SHA-1 hash of the new commit.
+    /// </summary>
+    public string StoreCommit(
+        string treeHash,
+        string[] parentHashes,
+        string authorName, string authorEmail,
+        string committerName, string committerEmail,
+        string message,
+        DateTimeOffset when)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var parentsJson = JsonSerializer.Serialize(parentHashes);
+        var ts = when.ToUnixTimeSeconds();
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositoryStoreCommit(
+            _handle, treeHash, parentsJson,
+            authorName, authorEmail,
+            committerName, committerEmail,
+            message, ts, out var hashPtr));
+        return NativeMethods.ConsumeGoString(hashPtr)!;
+    }
+
+    /// <summary>Updates (or creates) the reference <paramref name="refName"/> to point at <paramref name="hash"/>.</summary>
+    public void SetReference(string refName, string hash)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        NativeMethods.ThrowIfError(NativeMethods.GitRepositorySetReference(_handle, refName, hash));
     }
 `)
 	case "Remote":

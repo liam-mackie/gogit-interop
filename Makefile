@@ -49,7 +49,7 @@ pack:
 
 dev: generate $(CURRENT_BUILD)
 	cd dotnet && dotnet pack -c Release /p:Version=$(DEV_VERSION)
-	@echo "Packed: dotnet/GoGit.Interop/bin/Release/GoGit.Interop.$(DEV_VERSION).nupkg"
+	@echo "Packed: dotnet/GoGitDotNet/bin/Release/GoGitDotNet.$(DEV_VERSION).nupkg"
 
 clean:
 	rm -rf runtimes/

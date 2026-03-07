@@ -8,7 +8,7 @@ go-git is the most complete pure-Go implementation of git. It supports cloning, 
 
 1. **Reflecting** on go-git's Go types at build time using `go/packages` and `go/types`
 2. **Generating** a CGO shared library (`libgogit.dylib`/`.so`/`.dll`) that exposes Go functions via C-compatible exports
-3. **Generating** a matching C# class library (`GoGit.Interop`) with P/Invoke declarations and idiomatic wrapper classes
+3. **Generating** a matching C# class library (`GoGitDotNet`) with P/Invoke declarations and idiomatic wrapper classes
 
 The result is a NuGet package that .NET applications reference like any other library — the native binary is bundled as a runtime-specific asset.
 
@@ -22,7 +22,7 @@ The result is a NuGet package that .NET applications reference like any other li
 └──────────────────────┬──────────────────────────────────┘
                        │ P/Invoke (DllImport)
 ┌──────────────────────▼──────────────────────────────────┐
-│  GoGit.Interop (C#)                                     │
+│  GoGitDotNet (C#)                                     │
 │    NativeMethods.cs  — DllImport declarations           │
 │    Repository.cs     — idiomatic wrapper class          │
 │    CloneOptions.cs   — fluent options builder           │
@@ -113,7 +113,7 @@ shared/                Go c-shared library (build output)
   callbacks.h          C function pointer typedefs
   *_gen.go             Generated: one per handle type + options + iterators
 
-dotnet/GoGit.Interop/  C# class library (build output)
+dotnet/GoGitDotNet/  C# class library (build output)
   NativeMethods.cs     All DllImport declarations
   Repository.cs        Wrapper class with factory methods
   Commit.cs, Tree.cs, ... Wrapper classes for handle types
@@ -416,7 +416,7 @@ To wrap a method with an unmappable signature like `Foo.ComplexMethod(opts *BarC
 ```bash
 cd generate && go run .                                    # should show only expected warnings
 cd ../shared && go build -buildmode=c-shared -o /dev/null . # Go compiles
-cd ../dotnet/GoGit.Interop && dotnet build                  # C# compiles
+cd ../dotnet/GoGitDotNet && dotnet build                    # C# compiles
 ```
 
 ## Build
@@ -447,13 +447,13 @@ make clean                 # Remove build artifacts
 
 ```bash
 make dev
-# Produces: dotnet/GoGit.Interop/bin/Release/GoGit.Interop.0.1.1-dev.YYYYMMDDHHMMSS.nupkg
+# Produces: dotnet/GoGitDotNet/bin/Release/GoGitDotNet.0.1.1-dev.YYYYMMDDHHMMSS.nupkg
 ```
 
 ## C# API usage
 
 ```csharp
-using GoGit.Interop;
+using GoGitDotNet;
 
 // Open a repository
 using var repo = Repository.Open("/path/to/repo");

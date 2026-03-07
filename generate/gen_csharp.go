@@ -51,7 +51,7 @@ func generateNativeMethods(pkg *Package, dir string) error {
 	b.WriteString(`#nullable enable
 using System.Runtime.InteropServices;
 
-namespace GoGit.Interop;
+namespace GoGitDotNet;
 
 internal static partial class NativeMethods
 {

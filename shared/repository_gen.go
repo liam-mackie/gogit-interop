@@ -6,17 +6,20 @@ package main
 */
 import "C"
 import (
+	"encoding/base64"
 	"encoding/json"
+	"time"
+	"context"
 	git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/filemode"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing/storer"
-	"context"
-	"github.com/go-git/go-git/v6/storage/memory"
-	"github.com/go-git/go-billy/v6/memfs"
-	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/plumbing/transport"
+	"github.com/go-git/go-git/v6/storage/memory"
 	billy "github.com/go-git/go-billy/v6"
+	"github.com/go-git/go-billy/v6/memfs"
 )
 
 //export GitPlainClone
@@ -645,6 +648,148 @@ func GitBlame(commitHandle C.longlong, path *C.char, jsonOut **C.char) *C.char {
 	return nil
 }
 
+//export GitRepositoryStoreBlob
+func GitRepositoryStoreBlob(rHandle C.longlong, dataBase64 *C.char, hashOut **C.char) *C.char {
+	repo, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	content, err := base64.StdEncoding.DecodeString(C.GoString(dataBase64))
+	if err != nil {
+		return toCError(err)
+	}
+	obj := repo.Storer.NewEncodedObject()
+	obj.SetType(plumbing.BlobObject)
+	obj.SetSize(int64(len(content)))
+	w, err := obj.Writer()
+	if err != nil {
+		return toCError(err)
+	}
+	if _, err = w.Write(content); err != nil {
+		return toCError(err)
+	}
+	hash, err := repo.Storer.SetEncodedObject(obj)
+	if err != nil {
+		return toCError(err)
+	}
+	*hashOut = C.CString(hash.String())
+	return nil
+}
+
+//export GitRepositoryGetTreeEntries
+func GitRepositoryGetTreeEntries(rHandle C.longlong, treeHash *C.char, jsonOut **C.char) *C.char {
+	repo, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	tree, err := repo.TreeObject(plumbing.NewHash(C.GoString(treeHash)))
+	if err != nil {
+		return toCError(err)
+	}
+	type entryJSON struct {
+		Name string `json:"name"`
+		Hash string `json:"hash"`
+		Mode uint32 `json:"mode"`
+	}
+	entries := make([]entryJSON, len(tree.Entries))
+	for i, e := range tree.Entries {
+		entries[i] = entryJSON{Name: e.Name, Hash: e.Hash.String(), Mode: uint32(e.Mode)}
+	}
+	data, err := json.Marshal(entries)
+	if err != nil {
+		return toCError(err)
+	}
+	*jsonOut = C.CString(string(data))
+	return nil
+}
+
+//export GitRepositoryStoreTree
+func GitRepositoryStoreTree(rHandle C.longlong, entriesJson *C.char, hashOut **C.char) *C.char {
+	repo, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	type entryIn struct {
+		Name string `json:"name"`
+		Hash string `json:"hash"`
+		Mode uint32 `json:"mode"`
+	}
+	var entries []entryIn
+	if err := json.Unmarshal([]byte(C.GoString(entriesJson)), &entries); err != nil {
+		return toCError(err)
+	}
+	tree := &object.Tree{}
+	for _, e := range entries {
+		tree.Entries = append(tree.Entries, object.TreeEntry{
+			Name: e.Name,
+			Hash: plumbing.NewHash(e.Hash),
+			Mode: filemode.FileMode(e.Mode),
+		})
+	}
+	obj := repo.Storer.NewEncodedObject()
+	if err := tree.Encode(obj); err != nil {
+		return toCError(err)
+	}
+	hash, err := repo.Storer.SetEncodedObject(obj)
+	if err != nil {
+		return toCError(err)
+	}
+	*hashOut = C.CString(hash.String())
+	return nil
+}
+
+//export GitRepositoryStoreCommit
+func GitRepositoryStoreCommit(rHandle C.longlong, treeHash *C.char, parentsJson *C.char, authorName *C.char, authorEmail *C.char, committerName *C.char, committerEmail *C.char, message *C.char, timestampUnix C.longlong, hashOut **C.char) *C.char {
+	repo, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	var parentHashes []string
+	if err := json.Unmarshal([]byte(C.GoString(parentsJson)), &parentHashes); err != nil {
+		return toCError(err)
+	}
+	parents := make([]plumbing.Hash, len(parentHashes))
+	for i, h := range parentHashes {
+		parents[i] = plumbing.NewHash(h)
+	}
+	when := time.Unix(int64(timestampUnix), 0)
+	commit := &object.Commit{
+		TreeHash:     plumbing.NewHash(C.GoString(treeHash)),
+		ParentHashes: parents,
+		Author: object.Signature{
+			Name:  C.GoString(authorName),
+			Email: C.GoString(authorEmail),
+			When:  when,
+		},
+		Committer: object.Signature{
+			Name:  C.GoString(committerName),
+			Email: C.GoString(committerEmail),
+			When:  when,
+		},
+		Message: C.GoString(message),
+	}
+	obj := repo.Storer.NewEncodedObject()
+	if err := commit.Encode(obj); err != nil {
+		return toCError(err)
+	}
+	hash, err := repo.Storer.SetEncodedObject(obj)
+	if err != nil {
+		return toCError(err)
+	}
+	*hashOut = C.CString(hash.String())
+	return nil
+}
+
+//export GitRepositorySetReference
+func GitRepositorySetReference(rHandle C.longlong, refName *C.char, hash *C.char) *C.char {
+	repo, ok := loadHandle[*git.Repository](int64(rHandle))
+	if !ok {
+		return C.CString("invalid repository handle")
+	}
+	ref := plumbing.NewHashReference(plumbing.ReferenceName(C.GoString(refName)), plumbing.NewHash(C.GoString(hash)))
+	return toCError(repo.Storer.SetReference(ref))
+}
+
 //export GitRepositoryFree
 func GitRepositoryFree(rHandle C.longlong) {
 	removeHandle(int64(rHandle))
@@ -652,7 +797,10 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
+	_ = base64.StdEncoding
+	_ = time.Now
 	_ plumbing.Hash
+	_ filemode.FileMode
 	_ object.Signature
 	_ storer.ReferenceIter
 	_ = context.Background

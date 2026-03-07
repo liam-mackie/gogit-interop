@@ -115,8 +115,12 @@ func collectImports(ht *HandleType, isRepo bool) []string {
 
 	if isRepo {
 		importSet["\"context\""] = true
+		importSet["\"time\""] = true
+		importSet["\"encoding/base64\""] = true
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/config")
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing")
+		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing/filemode")
+		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing/object")
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/plumbing/transport")
 		addPackageImport(importSet, "github.com/go-git/go-git/v6/storage/memory")
 		addPackageImport(importSet, "github.com/go-git/go-billy/v6/memfs")
@@ -637,6 +641,8 @@ func writeSuppressImports(b *strings.Builder, ht *HandleType, imports []string) 
 		"storer":    "\t_ storer.ReferenceIter\n",
 		"time":      "\t_ = time.Now\n",
 		"io":        "\t_ = io.ReadAll\n",
+		"base64":    "\t_ = base64.StdEncoding\n",
+		"filemode":  "\t_ filemode.FileMode\n",
 	}
 
 	for _, imp := range imports {
