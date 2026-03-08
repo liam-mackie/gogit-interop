@@ -6,10 +6,10 @@ package main
 */
 import "C"
 import (
-	"io"
 	"encoding/json"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing"
+	"io"
 )
 
 //export GitBlobID
@@ -80,7 +80,7 @@ func GitBlobFree(bHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ = io.ReadAll
 	_ object.Signature
 	_ plumbing.Hash
+	_ = io.ReadAll
 )

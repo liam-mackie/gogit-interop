@@ -6,20 +6,20 @@ package main
 */
 import "C"
 import (
-	"encoding/base64"
-	"encoding/json"
 	"time"
-	"context"
-	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/config"
-	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/filemode"
-	"github.com/go-git/go-git/v6/plumbing/object"
-	"github.com/go-git/go-git/v6/plumbing/storer"
-	"github.com/go-git/go-git/v6/plumbing/transport"
+	"encoding/base64"
 	"github.com/go-git/go-git/v6/storage/memory"
-	billy "github.com/go-git/go-billy/v6"
 	"github.com/go-git/go-billy/v6/memfs"
+	git "github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing/storer"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/plumbing/filemode"
+	"github.com/go-git/go-git/v6/plumbing/transport"
+	billy "github.com/go-git/go-billy/v6"
+	"encoding/json"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"context"
 )
 
 //export GitPlainClone
@@ -797,16 +797,16 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ = base64.StdEncoding
 	_ = time.Now
-	_ plumbing.Hash
-	_ filemode.FileMode
-	_ object.Signature
-	_ storer.ReferenceIter
-	_ = context.Background
+	_ = base64.StdEncoding
 	_ = memory.NewStorage
 	_ = memfs.New
+	_ storer.ReferenceIter
 	_ config.RemoteConfig
+	_ filemode.FileMode
 	_ transport.AuthMethod
 	_ billy.Filesystem
+	_ plumbing.Hash
+	_ object.Signature
+	_ = context.Background
 )

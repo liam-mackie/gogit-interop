@@ -6,10 +6,10 @@ package main
 */
 import "C"
 import (
-	"encoding/json"
-	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing"
 	"time"
+	"encoding/json"
+	"github.com/go-git/go-git/v6/plumbing/object"
 )
 
 //export GitCommitFile
@@ -371,7 +371,7 @@ func GitCommitFree(cHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ object.Signature
 	_ plumbing.Hash
 	_ = time.Now
+	_ object.Signature
 )
