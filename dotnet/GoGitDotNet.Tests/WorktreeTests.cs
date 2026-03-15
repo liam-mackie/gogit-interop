@@ -21,7 +21,7 @@ public class WorktreeTests : IDisposable
     {
         _worktree.Dispose();
         _repo.Dispose();
-        Directory.Delete(_tmpDir, recursive: true);
+        TestHelpers.DeleteDirectory(_tmpDir);
         GC.SuppressFinalize(this);
     }
 

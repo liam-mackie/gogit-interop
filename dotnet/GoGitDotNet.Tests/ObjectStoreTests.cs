@@ -24,7 +24,7 @@ public class ObjectStoreTests : IDisposable
     public void Dispose()
     {
         _repo.Dispose();
-        Directory.Delete(_tmpDir, recursive: true);
+        TestHelpers.DeleteDirectory(_tmpDir);
     }
 
     // --- StoreBlob ---

@@ -14,7 +14,7 @@ public class RepositoryTests : IDisposable
 
     public void Dispose()
     {
-        Directory.Delete(_tmpDir, recursive: true);
+        TestHelpers.DeleteDirectory(_tmpDir);
         GC.SuppressFinalize(this);
     }
 

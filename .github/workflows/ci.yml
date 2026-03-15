@@ -118,9 +118,6 @@ jobs:
           go-version-file: go.mod
           cache-dependency-path: go.sum
 
-      - name: Install musl cross-compiler
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
       - name: Build native library
         run: make build-linux-amd64
 

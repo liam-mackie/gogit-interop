@@ -34,7 +34,7 @@ build-darwin-amd64:
 
 build-linux-amd64:
 	@mkdir -p runtimes/linux-x64/native
-	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 CC=x86_64-linux-musl-gcc \
+	CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
 		go build -buildmode=c-shared -o runtimes/linux-x64/native/$(LIB_NAME).so $(SRC)
 
 build-windows-amd64:
