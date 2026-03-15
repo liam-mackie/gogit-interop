@@ -416,7 +416,8 @@ To wrap a method with an unmappable signature like `Foo.ComplexMethod(opts *BarC
 ```bash
 cd generate && go run .                                    # should show only expected warnings
 cd ../shared && go build -buildmode=c-shared -o /dev/null . # Go compiles
-cd ../dotnet/GoGitDotNet && dotnet build                    # C# compiles
+cd ../dotnet/GoGitDotNet && dotnet build
+cd ../GoGitDotNet.Tests && dotnet test                  # C# compiles
 ```
 
 ## Build

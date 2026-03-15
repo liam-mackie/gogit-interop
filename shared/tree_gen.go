@@ -6,9 +6,9 @@ package main
 */
 import "C"
 import (
+	"encoding/json"
 	"github.com/go-git/go-git/v6/plumbing/object"
 	"github.com/go-git/go-git/v6/plumbing"
-	"encoding/json"
 )
 
 //export GitTreeDiff

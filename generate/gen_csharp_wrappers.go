@@ -216,16 +216,8 @@ func csWrapperReturnType(m Method) string {
 
 func csPublicMethodName(ht *HandleType, m Method) string {
 	switch ht.GoName + "." + m.GoName {
-	case "Repository.Worktree":
-		return "GetWorktree"
-	case "Repository.Remote":
-		return "GetRemote"
-	case "Repository.CommitObject":
-		return "GetCommitObject"
 	case "Repository.TreeObject":
 		return "GetTreeObject"
-	case "Repository.BlobObject":
-		return "GetBlobObject"
 	case "Repository.TagObject":
 		return "GetTagObject"
 	case "Worktree.Submodule":
@@ -234,8 +226,6 @@ func csPublicMethodName(ht *HandleType, m Method) string {
 		return "GetRepository"
 	case "Tree.Tree":
 		return "GetSubtree"
-	case "Commit.Tree":
-		return "GetTree"
 	case "Tag.Commit":
 		return "GetCommit"
 	case "Tag.Tree":
@@ -551,7 +541,7 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
 `)
 	case "Repository.CommitObject":
 		b.WriteString(`    /// <summary>Looks up a commit object by its SHA-1 <paramref name="hash"/>.</summary>
-    public Commit GetCommitObject(string hash)
+    public Commit CommitObject(string hash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(
@@ -566,6 +556,18 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
             AuthorTimestamp = DateTimeOffset.FromUnixTimeSeconds(ts),
         };
     }
+
+    /// <inheritdoc cref="CommitObject"/>
+    [Obsolete("Use CommitObject instead.")]
+    public Commit GetCommitObject(string hash) => CommitObject(hash);
+
+    /// <inheritdoc cref="Worktree"/>
+    [Obsolete("Use Worktree() instead.")]
+    public Worktree GetWorktree() => Worktree();
+
+    /// <inheritdoc cref="Remote"/>
+    [Obsolete("Use Remote instead.")]
+    public Remote GetRemote(string name) => Remote(name);
 `)
 	case "Repository.Merge":
 		b.WriteString(`    /// <summary>Merges the commit identified by <paramref name="hash"/> into the current branch.</summary>
@@ -627,13 +629,17 @@ func generateOverrideWrapperMethod(b *strings.Builder, ht *HandleType, m Method)
 `)
 	case "Repository.Config":
 		b.WriteString(`    /// <summary>Returns a subset of the repository's git configuration (core, user identity, default branch).</summary>
-    public GitConfig GetConfig()
+    public GitConfig Config()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.` + m.CName + `(_handle, out var jsonPtr));
         var json = NativeMethods.ConsumeGoString(jsonPtr)!;
         return JsonSerializer.Deserialize<GitConfig>(json)!;
     }
+
+    /// <inheritdoc cref="Config"/>
+    [Obsolete("Use Config instead.")]
+    public GitConfig GetConfig() => Config();
 `)
 	case "Repository.CreateRemoteAnonymous":
 		b.WriteString(`    /// <summary>Creates a temporary anonymous remote for <paramref name="url"/>. The remote is not saved to the repository configuration.</summary>
@@ -755,7 +761,7 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
     public string StoreBlob(string text) => StoreBlob(System.Text.Encoding.UTF8.GetBytes(text));
 
     /// <summary>Returns the direct entries of the tree identified by <paramref name="treeHash"/>.</summary>
-    public TreeEntryInfo[] GetTreeEntries(string treeHash)
+    public TreeEntryInfo[] TreeEntries(string treeHash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryGetTreeEntries(_handle, treeHash, out var jsonPtr));
@@ -763,11 +769,27 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         return JsonSerializer.Deserialize<TreeEntryInfo[]>(json) ?? [];
     }
 
+    /// <inheritdoc cref="TreeEntries"/>
+    [Obsolete("Use TreeEntries instead.")]
+    public TreeEntryInfo[] GetTreeEntries(string treeHash) => TreeEntries(treeHash);
+
+    /// <inheritdoc cref="BlobObject"/>
+    [Obsolete("Use BlobObject instead.")]
+    public Blob GetBlobObject(string hash) => BlobObject(hash);
+
+    /// <inheritdoc cref="CommitObject"/>
+    [Obsolete("Use CommitObject instead.")]
+    public Commit GetCommitObject(string hash) => CommitObject(hash);
+
     /// <summary>Writes a tree object built from <paramref name="entries"/> to the object store. Returns its SHA-1 hash.</summary>
+    /// <remarks>Entries are automatically sorted in git tree order (directories sort as <c>name + "/"</c>).</remarks>
     public string StoreTree(IEnumerable<TreeEntryInfo> entries)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var json = JsonSerializer.Serialize(entries);
+        var sorted = entries.OrderBy(e =>
+            e.Mode is TreeEntryMode.Directory or TreeEntryMode.GitLink ? e.Name + "/" : e.Name,
+            StringComparer.Ordinal);
+        var json = JsonSerializer.Serialize(sorted);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryStoreTree(_handle, json, out var hashPtr));
         return NativeMethods.ConsumeGoString(hashPtr)!;
     }
@@ -801,6 +823,20 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositorySetReference(_handle, refName, hash));
     }
+`)
+	case "Worktree":
+		b.WriteString(`
+    /// <summary>Writes <paramref name="content"/> to <paramref name="path"/> in the working tree, stages it, and returns the blob hash.</summary>
+    public string WriteFile(string path, byte[] content)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var b64 = Convert.ToBase64String(content);
+        NativeMethods.ThrowIfError(NativeMethods.GitWorktreeWriteFile(_handle, path, b64, out var hashPtr));
+        return NativeMethods.ConsumeGoString(hashPtr)!;
+    }
+
+    /// <summary>Writes UTF-8 <paramref name="content"/> to <paramref name="path"/> in the working tree, stages it, and returns the blob hash.</summary>
+    public string WriteFile(string path, string content) => WriteFile(path, System.Text.Encoding.UTF8.GetBytes(content));
 `)
 	case "Remote":
 		b.WriteString(`
@@ -899,5 +935,10 @@ func generateExtraWrapperMethods(b *strings.Builder, ht *HandleType) {
     }
 `, field, field, field, field, field, field)
 		}
+		b.WriteString(`
+    /// <inheritdoc cref="Tree"/>
+    [Obsolete("Use Tree() instead.")]
+    public Tree GetTree() => Tree();
+`)
 	}
 }

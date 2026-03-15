@@ -6,11 +6,11 @@ package main
 */
 import "C"
 import (
-	"github.com/go-git/go-git/v6/config"
 	"github.com/go-git/go-git/v6/storage/memory"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
 	"context"
+	"github.com/go-git/go-git/v6/config"
 )
 
 //export GitRemoteFetch
@@ -142,7 +142,7 @@ func GitRemoteFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ config.RemoteConfig
 	_ = memory.NewStorage
 	_ = context.Background
+	_ config.RemoteConfig
 )

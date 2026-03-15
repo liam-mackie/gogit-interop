@@ -529,6 +529,8 @@ func extraImportsForType(htName string) []string {
 		return []string{"\"io\""}
 	case "Commit":
 		return []string{"\"time\""}
+	case "Worktree":
+		return []string{"\"os\"", "\"encoding/base64\""}
 	}
 	return nil
 }

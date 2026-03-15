@@ -134,6 +134,18 @@ public sealed class Worktree : IDisposable
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
 
+    /// <summary>Writes <paramref name="content"/> to <paramref name="path"/> in the working tree, stages it, and returns the blob hash.</summary>
+    public string WriteFile(string path, byte[] content)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        var b64 = Convert.ToBase64String(content);
+        NativeMethods.ThrowIfError(NativeMethods.GitWorktreeWriteFile(_handle, path, b64, out var hashPtr));
+        return NativeMethods.ConsumeGoString(hashPtr)!;
+    }
+
+    /// <summary>Writes UTF-8 <paramref name="content"/> to <paramref name="path"/> in the working tree, stages it, and returns the blob hash.</summary>
+    public string WriteFile(string path, string content) => WriteFile(path, System.Text.Encoding.UTF8.GetBytes(content));
+
     public void Dispose()
     {
         if (_disposed) return;

@@ -319,4 +319,138 @@ public class ObjectStoreTests : IDisposable
         using var p = c2.Parent(0);
         Assert.Equal(commit1, p.Hash);
     }
+
+    // --- Add / Edit / Remove without checkout ---
+
+    [Fact]
+    public void NoCheckout_AddFile_AppearsInNextCommit()
+    {
+        var when = DateTimeOffset.UtcNow;
+
+        // Seed: one file
+        var seedBlob = _repo.StoreBlob("original\n");
+        var seedTree = _repo.StoreTree(
+        [
+            new TreeEntryInfo { Name = "existing.txt", Hash = seedBlob, Mode = TreeEntryMode.NonExecutableFile }
+        ]);
+        var seedCommit = _repo.StoreCommit(seedTree, [], "A", "a@b.com", "A", "a@b.com", "seed\n", when);
+        _repo.SetReference("refs/heads/main", seedCommit);
+
+        // Add a new file by mutating the entry list
+        var newBlob = _repo.StoreBlob("brand new\n");
+        var entries = _repo.TreeEntries(seedTree).ToList();
+        entries.Add(new TreeEntryInfo { Name = "added.txt", Hash = newBlob, Mode = TreeEntryMode.NonExecutableFile });
+        var newTree = _repo.StoreTree(entries);
+        var newCommit = _repo.StoreCommit(newTree, [seedCommit], "A", "a@b.com", "A", "a@b.com", "add file\n", when);
+        _repo.SetReference("refs/heads/main", newCommit);
+
+        using var c = _repo.CommitObject(newCommit);
+        using var t = c.Tree();
+        var result = _repo.TreeEntries(t.Hash);
+        Assert.Equal(2, result.Length);
+        var added = result.Single(e => e.Name == "added.txt");
+        using var blob = _repo.BlobObject(added.Hash);
+        Assert.Equal("brand new\n", blob.Contents());
+    }
+
+    [Fact]
+    public void NoCheckout_EditFile_ContentUpdatedInNextCommit()
+    {
+        var when = DateTimeOffset.UtcNow;
+
+        var v1Blob = _repo.StoreBlob("version 1\n");
+        var tree1 = _repo.StoreTree(
+        [
+            new TreeEntryInfo { Name = "file.txt", Hash = v1Blob, Mode = TreeEntryMode.NonExecutableFile }
+        ]);
+        var commit1 = _repo.StoreCommit(tree1, [], "A", "a@b.com", "A", "a@b.com", "v1\n", when);
+
+        // Edit: replace blob for the existing entry
+        var v2Blob = _repo.StoreBlob("version 2\n");
+        var entries = _repo.TreeEntries(tree1).ToList();
+        var i = entries.FindIndex(e => e.Name == "file.txt");
+        entries[i] = new TreeEntryInfo { Name = entries[i].Name, Hash = v2Blob, Mode = entries[i].Mode };
+        var tree2 = _repo.StoreTree(entries);
+        var commit2 = _repo.StoreCommit(tree2, [commit1], "A", "a@b.com", "A", "a@b.com", "v2\n", when);
+
+        using var c = _repo.CommitObject(commit2);
+        using var t = c.Tree();
+        var entry = _repo.TreeEntries(t.Hash).Single(e => e.Name == "file.txt");
+        using var blob = _repo.BlobObject(entry.Hash);
+        Assert.Equal("version 2\n", blob.Contents());
+    }
+
+    [Fact]
+    public void NoCheckout_RemoveFile_AbsentFromNextCommit()
+    {
+        var when = DateTimeOffset.UtcNow;
+
+        var b1 = _repo.StoreBlob("keep\n");
+        var b2 = _repo.StoreBlob("delete me\n");
+        var tree1 = _repo.StoreTree(
+        [
+            new TreeEntryInfo { Name = "keep.txt",   Hash = b1, Mode = TreeEntryMode.NonExecutableFile },
+            new TreeEntryInfo { Name = "delete.txt", Hash = b2, Mode = TreeEntryMode.NonExecutableFile },
+        ]);
+        var commit1 = _repo.StoreCommit(tree1, [], "A", "a@b.com", "A", "a@b.com", "seed\n", when);
+
+        // Remove: drop the unwanted entry
+        var entries = _repo.TreeEntries(tree1).Where(e => e.Name != "delete.txt").ToList();
+        var tree2 = _repo.StoreTree(entries);
+        var commit2 = _repo.StoreCommit(tree2, [commit1], "A", "a@b.com", "A", "a@b.com", "remove\n", when);
+
+        using var c = _repo.CommitObject(commit2);
+        using var t = c.Tree();
+        var result = _repo.TreeEntries(t.Hash);
+        Assert.Single(result);
+        Assert.Equal("keep.txt", result[0].Name);
+    }
+
+    [Fact]
+    public void NoCheckout_AddEditRemove_AllInOneCommit()
+    {
+        var when = DateTimeOffset.UtcNow;
+
+        // Seed: two files
+        var keepBlob    = _repo.StoreBlob("keep\n");
+        var editBlob    = _repo.StoreBlob("original\n");
+        var removeBlob  = _repo.StoreBlob("bye\n");
+        var seedTree = _repo.StoreTree(
+        [
+            new TreeEntryInfo { Name = "keep.txt",   Hash = keepBlob,   Mode = TreeEntryMode.NonExecutableFile },
+            new TreeEntryInfo { Name = "edit.txt",   Hash = editBlob,   Mode = TreeEntryMode.NonExecutableFile },
+            new TreeEntryInfo { Name = "remove.txt", Hash = removeBlob, Mode = TreeEntryMode.NonExecutableFile },
+        ]);
+        var seedCommit = _repo.StoreCommit(seedTree, [], "A", "a@b.com", "A", "a@b.com", "seed\n", when);
+
+        // Mutate: add + edit + remove in a single tree
+        var newBlob     = _repo.StoreBlob("new file\n");
+        var updatedBlob = _repo.StoreBlob("updated\n");
+
+        var entries = _repo.TreeEntries(seedTree).ToList();
+        entries.RemoveAll(e => e.Name == "remove.txt");
+        var ei = entries.FindIndex(e => e.Name == "edit.txt");
+        entries[ei] = new TreeEntryInfo { Name = entries[ei].Name, Hash = updatedBlob, Mode = entries[ei].Mode };
+        entries.Add(new TreeEntryInfo { Name = "new.txt", Hash = newBlob, Mode = TreeEntryMode.NonExecutableFile });
+
+        var newTree   = _repo.StoreTree(entries);
+        var newCommit = _repo.StoreCommit(newTree, [seedCommit], "A", "a@b.com", "A", "a@b.com", "mutate\n", when);
+        _repo.SetReference("refs/heads/main", newCommit);
+
+        using var c = _repo.CommitObject(newCommit);
+        using var t = c.Tree();
+        var result = _repo.TreeEntries(t.Hash);
+
+        Assert.Equal(3, result.Length);
+        Assert.Contains(result, e => e.Name == "keep.txt");
+        Assert.DoesNotContain(result, e => e.Name == "remove.txt");
+
+        var editEntry = result.Single(e => e.Name == "edit.txt");
+        using var editResult = _repo.BlobObject(editEntry.Hash);
+        Assert.Equal("updated\n", editResult.Contents());
+
+        var newEntry = result.Single(e => e.Name == "new.txt");
+        using var newResult = _repo.BlobObject(newEntry.Hash);
+        Assert.Equal("new file\n", newResult.Contents());
+    }
 }

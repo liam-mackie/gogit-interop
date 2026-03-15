@@ -6,20 +6,20 @@ package main
 */
 import "C"
 import (
-	"time"
-	"encoding/base64"
+	"github.com/go-git/go-git/v6/plumbing/filemode"
 	"github.com/go-git/go-git/v6/storage/memory"
 	"github.com/go-git/go-billy/v6/memfs"
-	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing/storer"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"context"
+	"encoding/base64"
 	"github.com/go-git/go-git/v6/config"
-	"github.com/go-git/go-git/v6/plumbing/filemode"
 	"github.com/go-git/go-git/v6/plumbing/transport"
 	billy "github.com/go-git/go-billy/v6"
 	"encoding/json"
+	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/object"
-	"context"
+	"github.com/go-git/go-git/v6/plumbing/storer"
+	"time"
 )
 
 //export GitPlainClone
@@ -797,16 +797,16 @@ func GitRepositoryFree(rHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ = time.Now
-	_ = base64.StdEncoding
+	_ filemode.FileMode
 	_ = memory.NewStorage
 	_ = memfs.New
-	_ storer.ReferenceIter
+	_ object.Signature
+	_ = context.Background
+	_ = base64.StdEncoding
 	_ config.RemoteConfig
-	_ filemode.FileMode
 	_ transport.AuthMethod
 	_ billy.Filesystem
 	_ plumbing.Hash
-	_ object.Signature
-	_ = context.Background
+	_ storer.ReferenceIter
+	_ = time.Now
 )

@@ -413,6 +413,13 @@ internal static partial class NativeMethods
         long wtHandle, out IntPtr jsonOut);
 
     [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
+    public static extern IntPtr GitWorktreeWriteFile(
+        long wtHandle,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string path,
+        [MarshalAs(UnmanagedType.LPUTF8Str)] string dataBase64,
+        out IntPtr hashOut);
+
+    [DllImport(LibName, CallingConvention = CallingConvention.Cdecl)]
     public static extern void GitWorktreeFree(long wHandle);
 
     // Blob methods

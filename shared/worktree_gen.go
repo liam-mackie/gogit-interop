@@ -10,6 +10,8 @@ import (
 	git "github.com/go-git/go-git/v6"
 	"github.com/go-git/go-git/v6/plumbing"
 	"context"
+	"os"
+	"encoding/base64"
 )
 
 //export GitWorktreeAdd
@@ -225,6 +227,35 @@ func GitWorktreeSubmodules(wtHandle C.longlong, jsonOut **C.char) *C.char {
 	return nil
 }
 
+//export GitWorktreeWriteFile
+func GitWorktreeWriteFile(wHandle C.longlong, path *C.char, dataBase64 *C.char, hashOut **C.char) *C.char {
+	recv, ok := loadHandle[*git.Worktree](int64(wHandle))
+	if !ok {
+		return C.CString("invalid worktree handle")
+	}
+	data, err := base64.StdEncoding.DecodeString(C.GoString(dataBase64))
+	if err != nil {
+		return toCError(err)
+	}
+	f, err := recv.Filesystem.OpenFile(C.GoString(path), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return toCError(err)
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		return toCError(err)
+	}
+	if err := f.Close(); err != nil {
+		return toCError(err)
+	}
+	hash, err := recv.Add(C.GoString(path))
+	if err != nil {
+		return toCError(err)
+	}
+	*hashOut = C.CString(hash.String())
+	return nil
+}
+
 //export GitWorktreeFree
 func GitWorktreeFree(wHandle C.longlong) {
 	removeHandle(int64(wHandle))
@@ -234,4 +265,5 @@ var (
 	_ = json.Marshal
 	_ plumbing.Hash
 	_ = context.Background
+	_ = base64.StdEncoding
 )

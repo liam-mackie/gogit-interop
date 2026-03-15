@@ -91,6 +91,8 @@ func generateExtraMethodsGo(b *strings.Builder, ht *HandleType) {
 		generateExtraRepoStoreTree(b)
 		generateExtraRepoStoreCommit(b)
 		generateExtraRepoSetReference(b)
+	case "Worktree":
+		generateExtraWorktreeWriteFile(b)
 	case "Remote":
 		generateExtraNewRemote(b)
 		generateExtraRemoteConfigName(b)
@@ -167,6 +169,8 @@ func writeExtraNativeMethods(b *strings.Builder, ht *HandleType) {
 		writeDllImport(b, "GitSubmoduleConfigName", "long subHandle, out IntPtr nameOut")
 		writeDllImport(b, "GitSubmoduleConfig", "long subHandle, out IntPtr jsonOut")
 		writeDllImport(b, "GitSubmoduleStatus", "long subHandle, out IntPtr jsonOut")
+	case "Worktree":
+		writeDllImport(b, "GitWorktreeWriteFile", "long wtHandle,\n        [MarshalAs(UnmanagedType.LPUTF8Str)] string path,\n        [MarshalAs(UnmanagedType.LPUTF8Str)] string dataBase64,\n        out IntPtr hashOut")
 	case "Commit":
 		for _, field := range []string{"Author", "Committer"} {
 			for _, prop := range []string{"Name", "Email"} {
@@ -926,6 +930,39 @@ func GitRepositorySetReference(rHandle C.longlong, refName *C.char, hash *C.char
 	}
 	ref := plumbing.NewHashReference(plumbing.ReferenceName(C.GoString(refName)), plumbing.NewHash(C.GoString(hash)))
 	return toCError(repo.Storer.SetReference(ref))
+}
+
+`)
+}
+
+func generateExtraWorktreeWriteFile(b *strings.Builder) {
+	b.WriteString(`//export GitWorktreeWriteFile
+func GitWorktreeWriteFile(wHandle C.longlong, path *C.char, dataBase64 *C.char, hashOut **C.char) *C.char {
+	recv, ok := loadHandle[*git.Worktree](int64(wHandle))
+	if !ok {
+		return C.CString("invalid worktree handle")
+	}
+	data, err := base64.StdEncoding.DecodeString(C.GoString(dataBase64))
+	if err != nil {
+		return toCError(err)
+	}
+	f, err := recv.Filesystem.OpenFile(C.GoString(path), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
+		return toCError(err)
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
+		return toCError(err)
+	}
+	if err := f.Close(); err != nil {
+		return toCError(err)
+	}
+	hash, err := recv.Add(C.GoString(path))
+	if err != nil {
+		return toCError(err)
+	}
+	*hashOut = C.CString(hash.String())
+	return nil
 }
 
 `)

@@ -9,6 +9,8 @@ shared/libgogit.h
 **/obj/
 .vs/
 .idea/
+.vscode/
+
 
 # NuGet packages
 *.nupkg

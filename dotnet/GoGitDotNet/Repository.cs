@@ -48,7 +48,7 @@ public sealed class Repository : IDisposable
         return new Repository(handle);
     }
 
-    public Blob GetBlobObject(string h)
+    public Blob BlobObject(string h)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryBlobObject(_handle, h, out var resultHandle));
@@ -80,7 +80,7 @@ public sealed class Repository : IDisposable
         return new ReferenceIterator(iter);
     }
 
-    public Commit GetCommitObject(string h)
+    public Commit CommitObject(string h)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryCommitObject(_handle, h, out var resultHandle));
@@ -96,13 +96,17 @@ public sealed class Repository : IDisposable
     }
 
     /// <summary>Returns a subset of the repository's git configuration (core, user identity, default branch).</summary>
-    public GitConfig GetConfig()
+    public GitConfig Config()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryConfig(_handle, out var jsonPtr));
         var json = NativeMethods.ConsumeGoString(jsonPtr)!;
         return JsonSerializer.Deserialize<GitConfig>(json)!;
     }
+
+    /// <inheritdoc cref="Config"/>
+    [Obsolete("Use Config instead.")]
+    public GitConfig GetConfig() => Config();
 
     /// <summary>Creates a new local branch pointing at <paramref name="hash"/>.</summary>
     public void CreateBranch(string name, string hash)
@@ -238,7 +242,7 @@ public sealed class Repository : IDisposable
         return new ReferenceIterator(iter);
     }
 
-    public Remote GetRemote(string name)
+    public Remote Remote(string name)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryRemote(_handle, name, out var resultHandle));
@@ -298,7 +302,7 @@ public sealed class Repository : IDisposable
         return new TreeIterator(iter);
     }
 
-    public Worktree GetWorktree()
+    public Worktree Worktree()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryWorktree(_handle, out var resultHandle));
@@ -335,7 +339,7 @@ public sealed class Repository : IDisposable
     public string StoreBlob(string text) => StoreBlob(System.Text.Encoding.UTF8.GetBytes(text));
 
     /// <summary>Returns the direct entries of the tree identified by <paramref name="treeHash"/>.</summary>
-    public TreeEntryInfo[] GetTreeEntries(string treeHash)
+    public TreeEntryInfo[] TreeEntries(string treeHash)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryGetTreeEntries(_handle, treeHash, out var jsonPtr));
@@ -343,11 +347,27 @@ public sealed class Repository : IDisposable
         return JsonSerializer.Deserialize<TreeEntryInfo[]>(json) ?? [];
     }
 
+    /// <inheritdoc cref="TreeEntries"/>
+    [Obsolete("Use TreeEntries instead.")]
+    public TreeEntryInfo[] GetTreeEntries(string treeHash) => TreeEntries(treeHash);
+
+    /// <inheritdoc cref="BlobObject"/>
+    [Obsolete("Use BlobObject instead.")]
+    public Blob GetBlobObject(string hash) => BlobObject(hash);
+
+    /// <inheritdoc cref="CommitObject"/>
+    [Obsolete("Use CommitObject instead.")]
+    public Commit GetCommitObject(string hash) => CommitObject(hash);
+
     /// <summary>Writes a tree object built from <paramref name="entries"/> to the object store. Returns its SHA-1 hash.</summary>
+    /// <remarks>Entries are automatically sorted in git tree order (directories sort as <c>name + "/"</c>).</remarks>
     public string StoreTree(IEnumerable<TreeEntryInfo> entries)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        var json = JsonSerializer.Serialize(entries);
+        var sorted = entries.OrderBy(e =>
+            e.Mode is TreeEntryMode.Directory or TreeEntryMode.GitLink ? e.Name + "/" : e.Name,
+            StringComparer.Ordinal);
+        var json = JsonSerializer.Serialize(sorted);
         NativeMethods.ThrowIfError(NativeMethods.GitRepositoryStoreTree(_handle, json, out var hashPtr));
         return NativeMethods.ConsumeGoString(hashPtr)!;
     }

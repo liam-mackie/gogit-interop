@@ -105,7 +105,7 @@ public sealed class Commit : IDisposable
     }
 
     /// <summary>Returns the root tree of this commit.</summary>
-    public Tree GetTree()
+    public Tree Tree()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         NativeMethods.ThrowIfError(NativeMethods.GitCommitTree(_handle, out var resultHandle));
@@ -185,6 +185,10 @@ public sealed class Commit : IDisposable
             return DateTimeOffset.FromUnixTimeSeconds(ts);
         }
     }
+
+    /// <inheritdoc cref="Tree"/>
+    [Obsolete("Use Tree() instead.")]
+    public Tree GetTree() => Tree();
 
     /// <summary>The SHA-1 hash of this commit.</summary>
     public string Hash
