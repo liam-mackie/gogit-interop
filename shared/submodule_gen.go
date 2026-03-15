@@ -6,9 +6,9 @@ package main
 */
 import "C"
 import (
+	"context"
 	"encoding/json"
 	git "github.com/go-git/go-git/v6"
-	"context"
 )
 
 //export GitSubmoduleInit

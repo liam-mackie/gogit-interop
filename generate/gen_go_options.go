@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -30,6 +31,7 @@ func generateOptionsGo(pkg *Package, outputDir string) error {
 	for imp := range importSet {
 		imports = append(imports, imp)
 	}
+	sort.Strings(imports)
 	writeImports(&b, imports)
 	b.WriteString("\n")
 

@@ -6,14 +6,14 @@ package main
 */
 import "C"
 import (
-	"github.com/go-git/go-git/v6/config"
-	"github.com/go-git/go-git/v6/plumbing/object"
 	"encoding/json"
+	"github.com/ProtonMail/go-crypto/openpgp"
+	"github.com/go-git/go-git/v6/config"
+	"github.com/go-git/go-git/v6/plumbing"
+	"github.com/go-git/go-git/v6/plumbing/object"
+	"github.com/go-git/go-git/v6/plumbing/transport"
 	"time"
 	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing"
-	"github.com/go-git/go-git/v6/plumbing/transport"
-	"github.com/ProtonMail/go-crypto/openpgp"
 )
 
 //export GitAddOptionsNew

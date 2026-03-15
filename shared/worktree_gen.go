@@ -6,12 +6,12 @@ package main
 */
 import "C"
 import (
-	"encoding/json"
-	git "github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing"
 	"context"
-	"os"
 	"encoding/base64"
+	"encoding/json"
+	"github.com/go-git/go-git/v6/plumbing"
+	"os"
+	git "github.com/go-git/go-git/v6"
 )
 
 //export GitWorktreeAdd
@@ -263,7 +263,7 @@ func GitWorktreeFree(wHandle C.longlong) {
 
 var (
 	_ = json.Marshal
-	_ plumbing.Hash
 	_ = context.Background
 	_ = base64.StdEncoding
+	_ plumbing.Hash
 )

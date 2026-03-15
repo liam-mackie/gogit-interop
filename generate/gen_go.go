@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -140,6 +141,7 @@ func collectImports(ht *HandleType, isRepo bool) []string {
 	for imp := range importSet {
 		imports = append(imports, imp)
 	}
+	sort.Strings(imports)
 	return imports
 }
 
